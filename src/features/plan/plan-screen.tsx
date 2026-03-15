@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
+import { DayAiAssistantCard } from "@/components/day-ai-assistant-card";
 import { MealSection } from "@/components/meal-section";
 import { MicronutrientBalanceCard } from "@/components/micronutrient-balance-card";
 import { ProductSearchSheet } from "@/components/product-search-sheet";
@@ -63,6 +64,7 @@ export function PlanScreen({ initialDateParam }: { initialDateParam?: string }) 
   const activeProducts = getActiveProducts(state);
   const recentProducts = getRecentProducts(state, user.id);
   const daySuggestion = getDaySuggestion(summary, activeProducts);
+  const dinnerSection = sections.find((section) => section.mealType === "dinner");
 
   const openMealSheet = (mealType: MealType, mealLabel = "") => {
     setSheetMealType(mealType);
@@ -126,6 +128,12 @@ export function PlanScreen({ initialDateParam }: { initialDateParam?: string }) 
         description="Показываю, что еще не добрали по клетчатке и основным микроэлементам."
         target={summary.target}
         actual={summary.totals}
+      />
+
+      <DayAiAssistantCard
+        summary={summary}
+        currentPath="/plan"
+        dinnerClosed={Boolean(dinnerSection?.rows.length)}
       />
 
       <section className="app-card rounded-[2rem] p-5">

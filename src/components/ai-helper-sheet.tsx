@@ -248,11 +248,11 @@ export function AiHelperSheet({
                   productContext,
                 });
 
-                if (result.mode === "app") {
-                  setAnswer(result.answer);
-                } else {
+                if (result.mode === "product") {
                   setAnswer(result.answer);
                   setProductSuggestion(result.product);
+                } else {
+                  setAnswer(result.answer);
                 }
               } catch (requestError) {
                 setError(requestError instanceof Error ? requestError.message : "Не удалось спросить AI.");

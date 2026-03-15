@@ -14,7 +14,7 @@ type ChatResponse = {
   }>;
 };
 
-export type AiHelperMode = "app" | "product";
+export type AiHelperMode = "app" | "product" | "day";
 
 export type ProductAiSuggestion = {
   name: string;
@@ -36,6 +36,7 @@ export type ProductAiSuggestion = {
 
 export type AiHelperResult =
   | { mode: "app"; answer: string }
+  | { mode: "day"; answer: string }
   | { mode: "product"; answer: string; product: ProductAiSuggestion };
 
 function extractJsonObject(text: string) {
@@ -125,6 +126,7 @@ export async function askAiHelper({
   currentPath,
   productName,
   productContext,
+  dayContext,
 }: {
   apiKey: string;
   mode: AiHelperMode;
@@ -132,6 +134,7 @@ export async function askAiHelper({
   currentPath: string;
   productName?: string;
   productContext?: string;
+  dayContext?: string;
 }): Promise<AiHelperResult> {
   if (mode === "app") {
     const content = await requestDeepSeek(apiKey, [
@@ -151,6 +154,30 @@ export async function askAiHelper({
 
     return {
       mode: "app",
+      answer: content,
+    };
+  }
+
+  if (mode === "day") {
+    const content = await requestDeepSeek(apiKey, [
+      {
+        role: "system",
+        content:
+          "Ты короткий AI-помощник внутри дневного плана питания. " +
+          "Твоя задача: по текущему съеденному, цели, остаткам калорий, БЖУ и дефицитам нутриентов предложить, чем лучше добрать день. " +
+          "Пиши по-русски, коротко, мягко, без стыда, максимум 5 коротких предложений. " +
+          "Предлагай 2-4 конкретные идеи еды или продуктов. " +
+          "Если калорий осталось мало, советуй что-то легкое. Если калории уже закрыты или превышены, не предлагай доедать, а мягко скажи, что день уже можно спокойно закончить. " +
+          "Отвечай только по текущему дню и продуктам, без общих лекций.",
+      },
+      {
+        role: "user",
+        content: `Контекст дня: ${dayContext ?? ""}\nЗапрос пользователя: ${question}`,
+      },
+    ]);
+
+    return {
+      mode: "day",
       answer: content,
     };
   }
