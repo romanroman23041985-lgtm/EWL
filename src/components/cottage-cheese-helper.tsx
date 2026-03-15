@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { getUnlockedAchievements } from "@/lib/companion/achievements";
 import {
@@ -92,6 +92,8 @@ export function CottageCheeseHelper() {
   const searchParams = useSearchParams();
   const previousDateRef = useRef<string | null>(null);
   const previousMealsRef = useRef<Record<string, number>>({});
+  const [displayCycle, setDisplayCycle] = useState(0);
+  const [hiddenDisplayToken, setHiddenDisplayToken] = useState<string | null>(null);
 
   const user = getSelectedUser(state);
   const currentDate = useMemo(() => {
@@ -190,8 +192,7 @@ export function CottageCheeseHelper() {
       return;
     }
 
-    const openKey =
-      mascotMode === "overeating" ? `stuffed-open-${currentDate}` : `open-${currentDate}`;
+    const openKey = mascotMode === "overeating" ? `stuffed-open-${currentDate}` : `open-${currentDate}`;
 
     if ((pathname === "/today" || pathname === "/plan") && state.companion.lastMessageKey !== openKey) {
       const message =
@@ -244,7 +245,7 @@ export function CottageCheeseHelper() {
     if (mascotMode === "overeating") {
       return {
         key: "stuffed-idle",
-        text: "Мяу-мяу, я пока кругляшик. Ничего, спокойно идём дальше.",
+        text: "Мяу-мяу, я пока кругляшик. Ничего, спокойно идем дальше.",
         mood: "comfort",
       } satisfies CompanionMessage;
     }
@@ -255,7 +256,7 @@ export function CottageCheeseHelper() {
     } satisfies CompanionMessage;
   }, [currentDate, mascotMode, pathname, state, summary, user]);
 
-  const eventMessage = useMemo(() => {
+  const storedMessage = useMemo(() => {
     if (!state.companion.lastMessageKey || !state.companion.lastMessageAt || !state.companion.lastMessageText) {
       return null;
     }
@@ -272,29 +273,78 @@ export function CottageCheeseHelper() {
     state.companion.lastMessageText,
   ]);
 
-  const message = eventMessage ?? fallbackMessage;
+  const message = storedMessage ?? fallbackMessage;
+  const baseToken =
+    storedMessage && state.companion.lastMessageAt ? `${storedMessage.key}-${state.companion.lastMessageAt}` : null;
+  const displayToken = baseToken ? `${baseToken}-${displayCycle}` : null;
+  const isExpanded = Boolean(displayToken && hiddenDisplayToken !== displayToken);
+  const canRecall = Boolean(message.text);
+
+  const dismissHelper = useCallback(() => {
+    if (displayToken) {
+      setHiddenDisplayToken(displayToken);
+    }
+  }, [displayToken]);
+
+  const revealHelper = useCallback(() => {
+    if (!canRecall) {
+      return;
+    }
+
+    setDisplayCycle((value) => value + 1);
+    setHiddenDisplayToken(null);
+  }, [canRecall]);
+
+  if (!canRecall) {
+    return null;
+  }
 
   return (
-    <div className="pointer-events-none fixed bottom-[calc(5.4rem+env(safe-area-inset-bottom))] right-4 z-30 flex max-w-[240px] flex-col items-end">
-      <div
-        className={`relative mb-2 rounded-[1.4rem] border border-[rgba(122,103,88,0.16)] bg-[var(--color-surface-strong)] px-4 py-3 text-sm leading-6 text-[var(--color-text)] shadow-[0_16px_34px_rgba(95,77,62,0.12)] ${
-          message.mood === "celebration"
-            ? "theme-important"
-            : message.mood === "comfort"
-              ? "theme-status-warning"
-              : "theme-elevated"
-        }`}
-      >
-        <div className="max-w-[210px] text-balance">{message.text}</div>
-        <div className="absolute -bottom-2 right-8 h-4 w-4 rotate-45 border-r border-b border-[rgba(122,103,88,0.16)] bg-[var(--color-surface-strong)]" />
-      </div>
-      <div
-        className={`rounded-[2rem] bg-transparent transition ${
-          message.mood === "celebration" ? "animate-[helper-bob_1.9s_ease-in-out_infinite]" : ""
-        }`}
-      >
-        <CottageCheeseFace mood={message.mood} variant={mascotMode} />
-      </div>
+    <div className="fixed bottom-[calc(5.2rem+env(safe-area-inset-bottom))] right-3 z-30 flex max-w-[240px] flex-col items-end">
+      {isExpanded ? (
+        <button
+          type="button"
+          aria-label="Скрыть творожка"
+          onClick={dismissHelper}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget && displayToken) {
+              setHiddenDisplayToken(displayToken);
+            }
+          }}
+          className="pointer-events-auto flex flex-col items-end animate-[helper-appear-hide_8.8s_ease-in-out_forwards] bg-transparent p-0 text-left"
+        >
+          <div
+            className={`relative mb-2 rounded-[1.4rem] border border-[rgba(122,103,88,0.16)] bg-[var(--color-surface-strong)] px-4 py-3 text-sm leading-6 text-[var(--color-text)] shadow-[0_16px_34px_rgba(95,77,62,0.12)] ${
+              message.mood === "celebration"
+                ? "theme-important"
+                : message.mood === "comfort"
+                  ? "theme-status-warning"
+                  : "theme-elevated"
+            }`}
+          >
+            <div className="max-w-[210px] text-balance">{message.text}</div>
+            <div className="absolute -bottom-2 right-8 h-4 w-4 rotate-45 border-r border-b border-[rgba(122,103,88,0.16)] bg-[var(--color-surface-strong)]" />
+          </div>
+          <div
+            className={`rounded-[2rem] bg-transparent transition ${
+              message.mood === "celebration" ? "animate-[helper-bob_1.9s_ease-in-out_infinite]" : ""
+            }`}
+          >
+            <CottageCheeseFace mood={message.mood} variant={mascotMode} />
+          </div>
+        </button>
+      ) : (
+        <button
+          type="button"
+          aria-label="Показать последнюю реплику творожка"
+          onClick={revealHelper}
+          className="pointer-events-auto flex h-14 w-14 items-end justify-end overflow-hidden rounded-full border border-[rgba(122,103,88,0.16)] bg-[var(--color-surface-strong)] shadow-[0_14px_28px_rgba(95,77,62,0.14)]"
+        >
+          <div className="origin-bottom-right scale-[0.52]">
+            <CottageCheeseFace mood={message.mood} variant={mascotMode} />
+          </div>
+        </button>
+      )}
     </div>
   );
 }

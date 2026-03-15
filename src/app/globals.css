@@ -213,6 +213,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+@keyframes helper-appear-hide {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+
+  10%,
+  72% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(22px) scale(0.94);
+  }
+}
+
 html[data-theme="beige"] .text-slate-900,
 html[data-theme="beige"] .text-slate-800,
 html[data-theme="beige"] .text-slate-700 {
