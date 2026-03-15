@@ -80,7 +80,6 @@ export function BottomNav() {
                     : "text-slate-600"
                 }`}
               >
-                {active ? <span className="absolute inset-x-5 top-1.5 h-1 rounded-full bg-white/70" /> : null}
                 {tab.icon}
                 <span className="mt-1">{tab.label}</span>
               </Link>

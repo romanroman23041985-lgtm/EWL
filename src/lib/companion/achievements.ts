@@ -1,5 +1,4 @@
 import {
-  getComfortCorridorStreak,
   getFullLogStreak,
   getHasReturnedAfterPause,
   getLoggingStreak,
@@ -48,30 +47,14 @@ function fullLogRule(days: number): AchievementRule {
   };
 }
 
-function corridorRule(days: number): AchievementRule {
-  return {
-    id: `corridor-${days}`,
-    title: `${days} дня в комфортном коридоре`,
-    subtitle: "Ой как ровненько, я аж ложечкой дзынь.",
-    celebration: "glow",
-    isUnlocked: (state, user) => getComfortCorridorStreak(state, user) >= days,
-  };
-}
-
 export const achievementRules: AchievementRule[] = [
   loggingRule(3),
   loggingRule(5),
   loggingRule(7),
-  loggingRule(10),
-  loggingRule(14),
-  loggingRule(30),
   mealRule("breakfast", 3, "3 завтрака подряд"),
   mealRule("lunch", 3, "3 обеда подряд"),
   mealRule("dinner", 3, "3 ужина подряд"),
   fullLogRule(5),
-  fullLogRule(7),
-  corridorRule(3),
-  corridorRule(5),
   {
     id: "return-after-pause",
     title: "Возвращение после паузы",

@@ -83,6 +83,7 @@ function createEmptyState(): HydratedState {
     companion: {
       unlockedAchievementIds: [],
       mascotMode: "default",
+      lastWeeklyRecapKey: null,
       lastMessageKey: null,
       lastMessageAt: null,
       lastMessageText: null,
@@ -109,6 +110,7 @@ function normalizeState(payload: PersistedAppState): PersistedAppState {
     companion: {
       unlockedAchievementIds: payload.companion?.unlockedAchievementIds ?? [],
       mascotMode: payload.companion?.mascotMode === "overeating" ? "overeating" : "default",
+      lastWeeklyRecapKey: payload.companion?.lastWeeklyRecapKey ?? null,
       lastMessageKey: payload.companion?.lastMessageKey ?? null,
       lastMessageAt: payload.companion?.lastMessageAt ?? null,
       lastMessageText: payload.companion?.lastMessageText ?? null,

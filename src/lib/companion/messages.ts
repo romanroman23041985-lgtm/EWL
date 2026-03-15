@@ -6,6 +6,13 @@ export type CompanionMessage = {
   mood?: "normal" | "celebration" | "comfort";
 };
 
+export type WeeklyRecapPayload = {
+  weekKey: string;
+  loggedDays: number;
+  comfortDays: number;
+  closedMeals: number;
+};
+
 const mealNames: Record<BuiltInMealType, string> = {
   breakfast: "завтрак",
   lunch: "обед",
@@ -175,6 +182,21 @@ export function getAchievementMessage(id: string, title: string, subtitle: strin
   return {
     key: `achievement-${id}`,
     text: `${title}! ${subtitle}`,
+    mood: "celebration",
+  };
+}
+
+export function getWeeklyRecapMessage(payload: WeeklyRecapPayload): CompanionMessage {
+  const summary =
+    payload.loggedDays >= 5
+      ? "Ой, неделька получилась очень аккуратная."
+      : payload.loggedDays >= 3
+        ? "Ля-ля, неделька уже выглядит симпатично."
+        : "Хи-хи, неделька тихонько собирается.";
+
+  return {
+    key: `weekly-recap-${payload.weekKey}`,
+    text: `${payload.loggedDays} дн. с логом, ${payload.comfortDays} аккуратных, ${payload.closedMeals} закрытий. ${summary}`,
     mood: "celebration",
   };
 }

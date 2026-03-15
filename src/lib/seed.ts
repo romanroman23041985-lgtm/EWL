@@ -9,6 +9,7 @@ export function buildSeedState(): PersistedAppState {
     companion: {
       unlockedAchievementIds: [],
       mascotMode: "default",
+      lastWeeklyRecapKey: null,
       lastMessageKey: null,
       lastMessageAt: null,
       lastMessageText: null,

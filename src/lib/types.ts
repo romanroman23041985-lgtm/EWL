@@ -77,6 +77,7 @@ export interface NutritionTotals {
 export interface CompanionState {
   unlockedAchievementIds: string[];
   mascotMode?: MascotMode;
+  lastWeeklyRecapKey?: string | null;
   lastMessageKey?: string | null;
   lastMessageAt?: string | null;
   lastMessageText?: string | null;

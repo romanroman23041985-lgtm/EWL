@@ -156,6 +156,54 @@ export function getOverTargetStreak(state: PersistedAppState, user: UserProfile)
   return countConsecutiveTail(dates, () => true);
 }
 
+function getWeekStartDate(dateKey: string) {
+  const date = parseDateKey(dateKey);
+  const weekday = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - weekday);
+  return date;
+}
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function getWeekKey(dateKey: string) {
+  return toDateKey(getWeekStartDate(dateKey));
+}
+
+export function getPreviousWeekKey(dateKey: string) {
+  return addDays(getWeekKey(dateKey), -7);
+}
+
+export function getWeeklyRecap(state: PersistedAppState, user: UserProfile, weekKey: string) {
+  const weekDates = Array.from({ length: 7 }, (_, index) => addDays(weekKey, index));
+  const loggedDays = weekDates.filter((date) => getLoggedDateKeys(state, user.id).includes(date)).length;
+  const comfortDays = weekDates.filter((date) => isComfortCorridorDay(state, user, date)).length;
+  const closedMeals = weekDates.reduce((sum, date) => {
+    const entry = getDayEntry(state, user.id, date);
+    if (!entry) {
+      return sum;
+    }
+
+    return (
+      sum +
+      (["breakfast", "lunch", "dinner"] as const).filter((mealType) =>
+        state.mealItems.some((item) => item.dayEntryId === entry.id && item.mealType === mealType),
+      ).length
+    );
+  }, 0);
+
+  return {
+    weekKey,
+    loggedDays,
+    comfortDays,
+    closedMeals,
+  };
+}
+
 export function getDaysSinceLastLog(state: PersistedAppState, userId: string) {
   const latest = getLatestLoggedDate(state, userId);
   if (!latest) {

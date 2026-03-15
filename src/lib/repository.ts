@@ -45,6 +45,7 @@ function migrateState(state: PersistedAppState): PersistedAppState {
     companion: {
       unlockedAchievementIds: state.companion?.unlockedAchievementIds ?? [],
       mascotMode: state.companion?.mascotMode === "overeating" ? "overeating" : "default",
+      lastWeeklyRecapKey: state.companion?.lastWeeklyRecapKey ?? null,
       lastMessageKey: state.companion?.lastMessageKey ?? null,
       lastMessageAt: state.companion?.lastMessageAt ?? null,
       lastMessageText: state.companion?.lastMessageText ?? null,
