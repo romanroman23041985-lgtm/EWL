@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { AiHelperSheet } from "@/components/ai-helper-sheet";
 import { getUnlockedAchievements } from "@/lib/companion/achievements";
 import {
   getAchievementMessage,
@@ -186,7 +187,7 @@ function pickContextMessage(
 }
 
 export function CottageCheeseHelper() {
-  const { state, updateCompanion } = useAppStore();
+  const { state, updateCompanion, createProduct } = useAppStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const previousDateRef = useRef<string | null>(null);
@@ -194,6 +195,7 @@ export function CottageCheeseHelper() {
   const seenBubbleTokenRef = useRef<string | null>(null);
   const initializedBubbleTokenRef = useRef(false);
   const [visibleBubbleToken, setVisibleBubbleToken] = useState<string | null>(null);
+  const [helperOpen, setHelperOpen] = useState(false);
 
   const user = getSelectedUser(state);
   const currentDate = useMemo(() => {
@@ -367,6 +369,7 @@ export function CottageCheeseHelper() {
     : null;
 
   return (
+    <>
     <div className="fixed bottom-[calc(5.15rem+env(safe-area-inset-bottom))] right-3 z-30 flex flex-col items-end">
       {showBubble && bubbleMessage ? (
         <div
@@ -392,22 +395,46 @@ export function CottageCheeseHelper() {
         </div>
       ) : null}
       <div className={`${bubbleMessage?.mood === "celebration" ? "animate-[helper-bob_2.1s_ease-in-out_infinite]" : ""}`}>
-        <CottageCheeseArtButton variant={mascotMode} mood={bubbleMessage?.mood ?? "normal"} />
+        <CottageCheeseArtButton
+          variant={mascotMode}
+          mood={bubbleMessage?.mood ?? "normal"}
+          onClick={() => {
+            setVisibleBubbleToken(null);
+            setHelperOpen(true);
+          }}
+        />
       </div>
     </div>
+      <AiHelperSheet
+        open={helperOpen}
+        currentPath={pathname}
+        onClose={() => setHelperOpen(false)}
+        onCreateProduct={(draft) => {
+          createProduct(draft);
+          setHelperOpen(false);
+        }}
+      />
+    </>
   );
 }
 
 function CottageCheeseArtButton({
   variant,
   mood,
+  onClick,
 }: {
   variant: MascotMode;
   mood?: "normal" | "celebration" | "comfort";
+  onClick: () => void;
 }) {
   return (
-    <div className="pointer-events-none select-none">
+    <button
+      type="button"
+      onClick={onClick}
+      className="select-none rounded-full transition hover:scale-[1.02] active:scale-[0.98]"
+      aria-label="Открыть AI-помощника творожка"
+    >
       <KawaiiCottageCheeseArt variant={variant} mood={mood} />
-    </div>
+    </button>
   );
 }
