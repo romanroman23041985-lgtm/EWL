@@ -1,4 +1,4 @@
-import type { Product, UserProfile, NutritionTotals } from "@/lib/types";
+import type { NutritionTotals, Product, UserProfile } from "@/lib/types";
 
 export function roundMacro(value: number) {
   return Math.round(value * 10) / 10;
@@ -25,10 +25,28 @@ export function resolveProductKcal(product: Product) {
   return roundKcal(product.proteinPer100 * 4 + product.fatPer100 * 9 + product.carbsPer100 * 4);
 }
 
+export function getHealthyGoalFloor(heightCm?: number | null) {
+  if (!heightCm || heightCm <= 0) {
+    return null;
+  }
+
+  const heightM = heightCm / 100;
+  return Math.round(18.5 * heightM * heightM * 10) / 10;
+}
+
+export function getPlanningWeight(profile: UserProfile) {
+  const goalWeight = profile.goalWeightKg && profile.goalWeightKg > 0 ? profile.goalWeightKg : profile.weightKg;
+  const healthyFloor = getHealthyGoalFloor(profile.heightCm);
+  const safeGoal = healthyFloor ? Math.max(goalWeight, healthyFloor) : goalWeight;
+
+  return Math.min(profile.weightKg, safeGoal);
+}
+
 export function calculateTargets(profile: UserProfile): NutritionTotals {
-  const protein = roundMacro(profile.weightKg * profile.proteinPerKg);
-  const fat = roundMacro(profile.weightKg * profile.fatPerKg);
-  const carbs = roundMacro(profile.weightKg * profile.carbsPerKg);
+  const baseWeight = getPlanningWeight(profile);
+  const protein = roundMacro(baseWeight * profile.proteinPerKg);
+  const fat = roundMacro(baseWeight * profile.fatPerKg);
+  const carbs = roundMacro(baseWeight * profile.carbsPerKg);
 
   return {
     protein,

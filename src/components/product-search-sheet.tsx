@@ -4,7 +4,14 @@ import { useMemo, useState } from "react";
 import { ProductAvatar } from "@/components/product-avatar";
 import { ProductFormSheet } from "@/components/product-form-sheet";
 import { mealLabels, mealOrder } from "@/lib/constants";
-import { rankProducts } from "@/lib/products";
+import {
+  formatAmountValue,
+  getDefaultProductAmount,
+  getProductQuantityMode,
+  getProductUnitLabel,
+  rankProducts,
+  toMealItemQuantity,
+} from "@/lib/products";
 import type { MealType, Product, ProductDraft } from "@/lib/types";
 
 type EditorState =
@@ -29,7 +36,13 @@ export function ProductSearchSheet({
   recentProducts: Product[];
   initialMealType: MealType;
   onClose: () => void;
-  onSubmit: (payload: { mealType: MealType; productId: string; grams: number }) => void;
+  onSubmit: (payload: {
+    mealType: MealType;
+    productId: string;
+    grams: number;
+    quantityMode?: "grams" | "piece";
+    servings?: number | null;
+  }) => void;
   onCreateProduct: (draft: ProductDraft) => void;
   onUpdateProduct: (productId: string, draft: ProductDraft) => void;
   onDeleteProduct: (productId: string) => void;
@@ -37,21 +50,33 @@ export function ProductSearchSheet({
 }) {
   const [query, setQuery] = useState("");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [grams, setGrams] = useState("100");
+  const [amount, setAmount] = useState("100");
   const [mealType, setMealType] = useState<MealType>(initialMealType);
   const [editorState, setEditorState] = useState<EditorState>(null);
 
   const filteredProducts = useMemo(() => rankProducts(products, query), [products, query]);
-  const selectedProduct = filteredProducts.find((product) => product.id === selectedProductId) ?? recentProducts.find((product) => product.id === selectedProductId);
-  const numericGrams = Number(grams.replace(",", "."));
-  const canSubmit = Boolean(selectedProductId) && Number.isFinite(numericGrams) && numericGrams > 0;
+  const selectedProduct =
+    filteredProducts.find((product) => product.id === selectedProductId) ??
+    recentProducts.find((product) => product.id === selectedProductId) ??
+    products.find((product) => product.id === selectedProductId);
+  const numericAmount = Number(amount.replace(",", "."));
+  const selectedMode = getProductQuantityMode(selectedProduct);
+  const unitLabel = getProductUnitLabel(selectedProduct);
+  const canSubmit = Boolean(selectedProduct) && Number.isFinite(numericAmount) && numericAmount > 0;
+  const quickAmounts = selectedMode === "piece" ? [1, 2, 3] : [100, 200, 300, 400];
 
   if (!open) {
     return null;
   }
 
+  const selectProduct = (product: Product) => {
+    setSelectedProductId(product.id);
+    setAmount(getDefaultProductAmount(product));
+  };
+
   const renderProductRow = (product: Product, compact = false) => {
     const active = selectedProductId === product.id;
+    const isPieceProduct = getProductQuantityMode(product) === "piece";
 
     return (
       <div
@@ -65,7 +90,7 @@ export function ProductSearchSheet({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setSelectedProductId(product.id)}
+            onClick={() => selectProduct(product)}
             className="flex min-w-0 flex-1 items-center gap-3 text-left"
           >
             <ProductAvatar icon={product.icon} name={product.name} size={compact ? "sm" : "md"} />
@@ -74,16 +99,22 @@ export function ProductSearchSheet({
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900">{product.name}</p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Б {product.proteinPer100} • Ж {product.fatPer100} • У {product.carbsPer100} • {product.kcalPer100 ?? "auto"} ккал
+                    Б {product.proteinPer100} • Ж {product.fatPer100} • У {product.carbsPer100} •{" "}
+                    {product.kcalPer100 ?? "auto"} ккал
                   </p>
                 </div>
                 {product.isCustom ? (
                   <span className="rounded-full bg-[var(--color-accent-soft)] px-2.5 py-1 text-[11px] font-semibold text-[var(--color-accent)]">
-                    Свой продукт
+                    Свой
                   </span>
                 ) : null}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
+                {isPieceProduct ? (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                    1 {getProductUnitLabel(product)} ≈ {formatAmountValue(product.gramsPerUnit ?? 0)} г
+                  </span>
+                ) : null}
                 {active ? (
                   <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[var(--color-mint)]">
                     Выбрано
@@ -115,7 +146,7 @@ export function ProductSearchSheet({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Добавить продукт</h3>
-                <p className="mt-1 text-sm text-slate-500">Быстрый поиск, recent и свои продукты в одном месте.</p>
+                <p className="mt-1 text-sm text-slate-500">Быстрый поиск, недавние и свои продукты в одном месте.</p>
               </div>
               <button
                 type="button"
@@ -190,38 +221,72 @@ export function ProductSearchSheet({
           </div>
 
           <div className="border-t border-[var(--color-outline)] bg-[#fffdfa] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4">
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Граммовка</p>
+            <div className="rounded-[1.25rem] bg-white px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                    {selectedMode === "piece" ? "Количество" : "Граммовка"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    {selectedProduct
+                      ? `Добавление в ${mealLabels[mealType].toLowerCase()}.`
+                      : "Сначала выберите продукт."}
+                  </p>
+                </div>
+                {selectedProduct ? (
+                  <div className="rounded-full bg-[var(--color-mint-soft)] px-3 py-2 text-xs font-semibold text-[var(--color-mint)]">
+                    {selectedMode === "piece" ? unitLabel : "граммы"}
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex items-center gap-3">
                 <input
                   type="number"
-                  min="1"
-                  step="5"
+                  min="0.1"
+                  step={selectedMode === "piece" ? "0.5" : "5"}
                   inputMode="decimal"
-                  value={grams}
-                  onChange={(event) => setGrams(event.target.value)}
-                  className="mt-2 h-12 w-full rounded-[1rem] border border-[var(--color-outline)] bg-white px-4 outline-none"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  className="h-12 min-w-0 flex-1 rounded-[1rem] border border-[var(--color-outline)] bg-white px-4 outline-none"
                 />
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!canSubmit) {
-                    return;
-                  }
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedProduct || !canSubmit) {
+                      return;
+                    }
 
-                  onSubmit({ mealType, productId: selectedProductId, grams: numericGrams });
-                  onClose();
-                }}
-                disabled={!canSubmit}
-                className="mt-6 min-w-[132px] rounded-[1rem] bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(243,124,165,0.32)] disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Добавить
-              </button>
+                    onSubmit({
+                      mealType,
+                      productId: selectedProduct.id,
+                      ...toMealItemQuantity(selectedProduct, numericAmount),
+                    });
+                    onClose();
+                  }}
+                  disabled={!canSubmit}
+                  className="min-w-[132px] rounded-[1rem] bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(243,124,165,0.32)] disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Добавить
+                </button>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {quickAmounts.map((quickAmount) => (
+                  <button
+                    key={quickAmount}
+                    type="button"
+                    onClick={() => setAmount(String(quickAmount))}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold ${
+                      Number(amount.replace(",", ".")) === quickAmount
+                        ? "bg-[var(--color-accent)] text-white"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {quickAmount} {unitLabel}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p className="mt-2 text-xs text-slate-500">
-              {selectedProduct ? `Добавление в: ${mealLabels[mealType].toLowerCase()}.` : "Сначала выберите продукт."}
-            </p>
           </div>
         </div>
       </div>

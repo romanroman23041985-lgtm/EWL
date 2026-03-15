@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
 import { MonthCalendar } from "@/components/month-calendar";
-import { UserSwitcher } from "@/components/user-switcher";
+import { ProfileFocusCard } from "@/components/profile-focus-card";
 import { getMonthStats, getMonthSummaryMap, getSelectedUser } from "@/lib/selectors";
 import { useAppStore } from "@/store/app-store";
 
@@ -33,6 +33,7 @@ export function CalendarScreen() {
 
   const summaryMap = getMonthSummaryMap(state, user, monthDate);
   const stats = getMonthStats(state, user, monthDate);
+  const monthlyBalancePositive = stats.totalBalanceKcal >= 0;
 
   return (
     <div className="space-y-4">
@@ -44,15 +45,19 @@ export function CalendarScreen() {
         </p>
       </section>
 
-      <UserSwitcher users={state.profiles} selectedUserId={user.id} onSelect={setSelectedUser} />
+      <ProfileFocusCard
+        users={state.profiles}
+        selectedUserId={user.id}
+        onSelect={setSelectedUser}
+        title="Профиль календаря"
+        description="Календарь и статистика сейчас показаны только для одного активного профиля."
+      />
 
       <MonthCalendar
         monthDate={monthDate}
         selectedDate={selectedDate}
         summaryMap={summaryMap}
-        onChangeMonth={(amount) =>
-          setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + amount, 1))
-        }
+        onChangeMonth={(amount) => setMonthDate(new Date(monthDate.getFullYear(), monthDate.getMonth() + amount, 1))}
         onSelectDate={(date) => {
           setSelectedDate(date);
           router.push(`/plan?date=${date}`);
@@ -80,6 +85,14 @@ export function CalendarScreen() {
               <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Средние ккал</div>
               <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.average.kcal}</div>
             </div>
+            <div className="rounded-[1.35rem] bg-white px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Цель за месяц</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.totalTargetKcal}</div>
+            </div>
+            <div className="rounded-[1.35rem] bg-white px-4 py-4">
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Факт за месяц</div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900">{stats.totalActualKcal}</div>
+            </div>
             <div className="rounded-[1.35rem] bg-[var(--color-danger-soft)] px-4 py-4">
               <div className="text-xs uppercase tracking-[0.16em] text-[var(--color-danger)]/70">Дней выше нормы</div>
               <div className="mt-2 text-2xl font-semibold text-[var(--color-danger)]">{stats.daysAbove}</div>
@@ -87,6 +100,23 @@ export function CalendarScreen() {
             <div className="rounded-[1.35rem] bg-[var(--color-mint-soft)] px-4 py-4">
               <div className="text-xs uppercase tracking-[0.16em] text-[var(--color-mint)]/70">Дней в норме</div>
               <div className="mt-2 text-2xl font-semibold text-[var(--color-mint)]">{stats.daysWithin}</div>
+            </div>
+            <div
+              className={`col-span-2 rounded-[1.35rem] px-4 py-4 text-sm ${
+                monthlyBalancePositive ? "bg-[var(--color-mint-soft)] text-slate-700" : "bg-[var(--color-danger-soft)] text-slate-700"
+              }`}
+            >
+              <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Итог месяца</div>
+              <div className="mt-2 text-lg font-semibold text-slate-900">
+                {monthlyBalancePositive
+                  ? `Вы недобрали ${stats.totalBalanceKcal} ккал относительно цели месяца`
+                  : `Вы превысили месячную цель на ${Math.abs(stats.totalBalanceKcal)} ккал`}
+              </div>
+              <p className="mt-2 leading-6">
+                {monthlyBalancePositive
+                  ? "Темп идет мягко и в рамках плана. Продолжайте так же спокойно."
+                  : "Ничего критичного: просто в следующем месяце можно держаться чуть ближе к дневной цели."}
+              </p>
             </div>
             <div className="col-span-2 rounded-[1.35rem] bg-white px-4 py-4 text-sm text-slate-600">
               <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Средние Б/Ж/У</div>

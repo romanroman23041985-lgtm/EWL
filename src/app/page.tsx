@@ -7,8 +7,8 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/today");
+    router.replace("/profile");
   }, [router]);
 
-  return <div className="app-card rounded-[2rem] p-6 text-sm text-slate-500">Перехожу к сегодняшнему дню...</div>;
+  return <div className="app-card rounded-[2rem] p-6 text-sm text-slate-500">Перехожу к общему плану...</div>;
 }

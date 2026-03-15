@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --color-shell: #f8f7f1;
-  --color-surface: rgba(255, 252, 248, 0.94);
+  --color-shell: #f5f2ec;
+  --color-surface: rgba(255, 252, 248, 0.97);
   --color-surface-strong: #ffffff;
-  --color-surface-mint: #ebfaf4;
-  --color-text: #1d2939;
-  --color-subtle: #667085;
-  --color-outline: rgba(162, 181, 182, 0.22);
-  --color-accent: #f37ca5;
-  --color-accent-soft: #ffdce7;
-  --color-mint: #52c7ba;
-  --color-mint-soft: #dff7f1;
-  --color-danger: #e45b6b;
-  --color-danger-soft: #ffe6ea;
-  --color-warning: #f6b36d;
-  --shadow-soft: 0 16px 45px rgba(118, 137, 140, 0.12);
+  --color-surface-mint: #e7f8f1;
+  --color-text: #172334;
+  --color-subtle: #5c6675;
+  --color-outline: rgba(118, 136, 142, 0.28);
+  --color-accent: #ef5d8d;
+  --color-accent-soft: #ffd5e2;
+  --color-mint: #2aa697;
+  --color-mint-soft: #d8f5ee;
+  --color-danger: #d94b5d;
+  --color-danger-soft: #ffe0e5;
+  --color-warning: #eb9b44;
+  --shadow-soft: 0 16px 45px rgba(90, 105, 115, 0.14);
 }
 
 @theme inline {
@@ -29,8 +29,8 @@
 
 html {
   background:
-    radial-gradient(circle at top left, rgba(82, 199, 186, 0.2), transparent 32%),
-    radial-gradient(circle at top right, rgba(243, 124, 165, 0.16), transparent 28%),
+    radial-gradient(circle at top left, rgba(42, 166, 151, 0.22), transparent 32%),
+    radial-gradient(circle at top right, rgba(239, 93, 141, 0.18), transparent 28%),
     var(--color-shell);
 }
 

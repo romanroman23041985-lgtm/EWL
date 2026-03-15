@@ -2,11 +2,15 @@ export type Sex = "female" | "male";
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
 
+export type QuantityMode = "grams" | "piece";
+
 export interface UserProfile {
   id: string;
   name: string;
   sex: Sex;
+  heightCm?: number | null;
   weightKg: number;
+  goalWeightKg?: number | null;
   proteinPerKg: number;
   fatPerKg: number;
   carbsPerKg: number;
@@ -22,6 +26,10 @@ export interface Product {
   fatPer100: number;
   carbsPer100: number;
   kcalPer100: number | null;
+  unitMode?: QuantityMode;
+  unitLabel?: string;
+  gramsPerUnit?: number | null;
+  searchTerms?: string[];
   notes?: string;
   isCustom?: boolean;
   archivedAt?: string | null;
@@ -44,6 +52,8 @@ export interface MealItem {
   mealType: MealType;
   productId: string;
   grams: number;
+  quantityMode?: QuantityMode;
+  servings?: number | null;
   eatenAt?: string;
   notes?: string;
   sortOrder: number;
@@ -87,4 +97,7 @@ export interface ProductDraft {
   fatPer100: string;
   carbsPer100: string;
   kcalPer100: string;
+  unitMode: QuantityMode;
+  unitLabel: string;
+  gramsPerUnit: string;
 }

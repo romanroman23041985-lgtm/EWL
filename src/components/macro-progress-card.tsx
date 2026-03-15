@@ -16,7 +16,7 @@ const tintStyles = {
     fill: "bg-[var(--color-accent)]",
   },
   gold: {
-    track: "bg-[#fff0dd]",
+    track: "bg-[#ffe8ca]",
     fill: "bg-[var(--color-warning)]",
   },
 };
@@ -35,13 +35,13 @@ export function MacroProgressCard({
     <div className="app-card rounded-[1.75rem] p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
+          <p className="text-sm font-medium text-slate-600">{label}</p>
           <p className="mt-1 text-2xl font-semibold text-slate-900">
             {consumed}
-            <span className="ml-1 text-sm font-medium text-slate-400">{unit}</span>
+            <span className="ml-1 text-sm font-medium text-slate-500">{unit}</span>
           </p>
         </div>
-        <div className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-slate-500">
+        <div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
           {target}
           {unit}
         </div>
@@ -52,7 +52,7 @@ export function MacroProgressCard({
           style={{ width: `${Math.max(progress * 100, consumed > 0 ? 8 : 0)}%` }}
         />
       </div>
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-slate-600">
         {delta >= 0 ? `Осталось ${delta}${unit}` : `Превышение ${Math.abs(delta)}${unit}`}
       </p>
     </div>

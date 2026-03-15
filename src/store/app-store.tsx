@@ -9,6 +9,7 @@ import type {
   PersistedAppState,
   Product,
   ProductDraft,
+  QuantityMode,
   Sex,
   UserProfile,
 } from "@/lib/types";
@@ -19,7 +20,7 @@ type HydratedState = PersistedAppState & {
 
 type ProfileInput = Pick<
   UserProfile,
-  "name" | "sex" | "weightKg" | "proteinPerKg" | "fatPerKg" | "carbsPerKg"
+  "name" | "sex" | "heightCm" | "weightKg" | "goalWeightKg" | "proteinPerKg" | "fatPerKg" | "carbsPerKg"
 >;
 
 type ProductInput = {
@@ -29,8 +30,22 @@ type ProductInput = {
 type Action =
   | { type: "hydrate"; payload: PersistedAppState }
   | { type: "setSelectedUser"; payload: string }
-  | { type: "addMealItem"; payload: { userId: string; date: string; mealType: MealType; productId: string; grams: number } }
-  | { type: "updateMealItem"; payload: { itemId: string; grams?: number; mealType?: MealType } }
+  | {
+      type: "addMealItem";
+      payload: {
+        userId: string;
+        date: string;
+        mealType: MealType;
+        productId: string;
+        grams: number;
+        quantityMode?: QuantityMode;
+        servings?: number | null;
+      };
+    }
+  | {
+      type: "updateMealItem";
+      payload: { itemId: string; grams?: number; mealType?: MealType; quantityMode?: QuantityMode; servings?: number | null };
+    }
   | { type: "deleteMealItem"; payload: { itemId: string } }
   | { type: "createProfile"; payload: ProfileInput }
   | { type: "updateProfile"; payload: { userId: string; changes: Partial<ProfileInput> } }
@@ -60,9 +75,23 @@ function normalizeState(payload: PersistedAppState): PersistedAppState {
   return {
     ...payload,
     recentProductsByUser: payload.recentProductsByUser ?? {},
+    profiles: payload.profiles.map((profile) => ({
+      ...profile,
+      heightCm: profile.heightCm ?? null,
+      goalWeightKg: profile.goalWeightKg ?? profile.weightKg,
+    })),
     products: payload.products.map((product) => ({
       ...product,
+      unitMode: product.unitMode === "piece" ? "piece" : "grams",
+      unitLabel: product.unitLabel ?? "",
+      gramsPerUnit: product.gramsPerUnit ?? null,
+      searchTerms: product.searchTerms ?? [],
       archivedAt: product.archivedAt ?? null,
+    })),
+    mealItems: payload.mealItems.map((item) => ({
+      ...item,
+      quantityMode: item.quantityMode === "piece" ? "piece" : "grams",
+      servings: item.servings ?? null,
     })),
   };
 }
@@ -73,10 +102,14 @@ function toProductEntity(draft: ProductDraft, existing?: Product): Product {
     id: existing?.id ?? createId("product"),
     name: draft.name.trim(),
     icon: draft.icon.trim() || undefined,
+    searchTerms: existing?.searchTerms ?? [],
     proteinPer100: parseDraftNumber(draft.proteinPer100) ?? 0,
     fatPer100: parseDraftNumber(draft.fatPer100) ?? 0,
     carbsPer100: parseDraftNumber(draft.carbsPer100) ?? 0,
     kcalPer100: draft.kcalPer100.trim() ? (parseDraftNumber(draft.kcalPer100) ?? getAutoKcalFromDraft(draft)) : getAutoKcalFromDraft(draft),
+    unitMode: draft.unitMode,
+    unitLabel: draft.unitMode === "piece" ? draft.unitLabel.trim() : "",
+    gramsPerUnit: draft.unitMode === "piece" ? (parseDraftNumber(draft.gramsPerUnit) ?? null) : null,
     isCustom: true,
     archivedAt: null,
     createdAt: existing?.createdAt ?? now,
@@ -130,7 +163,7 @@ function reducer(state: HydratedState, action: Action): HydratedState {
         selectedUserId: action.payload,
       };
     case "addMealItem": {
-      const { userId, date, mealType, productId, grams } = action.payload;
+      const { userId, date, mealType, productId, grams, quantityMode, servings } = action.payload;
       const ensured = ensureDayEntry(state, userId, date);
       const nextOrder =
         state.mealItems
@@ -155,6 +188,8 @@ function reducer(state: HydratedState, action: Action): HydratedState {
             mealType,
             productId,
             grams,
+            quantityMode: quantityMode ?? "grams",
+            servings: servings ?? null,
             sortOrder: nextOrder,
           },
         ],
@@ -178,6 +213,9 @@ function reducer(state: HydratedState, action: Action): HydratedState {
                 ...candidate,
                 grams: action.payload.grams ?? candidate.grams,
                 mealType: action.payload.mealType ?? candidate.mealType,
+                quantityMode: action.payload.quantityMode ?? candidate.quantityMode ?? "grams",
+                servings:
+                  action.payload.servings === undefined ? (candidate.servings ?? null) : action.payload.servings,
               }
             : candidate,
         ),
@@ -202,6 +240,8 @@ function reducer(state: HydratedState, action: Action): HydratedState {
       const profile = {
         id: createId("profile"),
         ...action.payload,
+        heightCm: action.payload.heightCm ?? null,
+        goalWeightKg: action.payload.goalWeightKg ?? action.payload.weightKg,
         createdAt: now,
         updatedAt: now,
       };
@@ -258,7 +298,7 @@ function reducer(state: HydratedState, action: Action): HydratedState {
     }
     case "updateProduct": {
       const existing = state.products.find((product) => product.id === action.payload.productId);
-      if (!existing || !existing.isCustom) {
+      if (!existing) {
         return state;
       }
 
@@ -271,12 +311,13 @@ function reducer(state: HydratedState, action: Action): HydratedState {
     }
     case "deleteProduct": {
       const existing = state.products.find((product) => product.id === action.payload.productId);
-      if (!existing || !existing.isCustom) {
+      if (!existing) {
         return state;
       }
 
       const wasUsed = state.mealItems.some((item) => item.productId === action.payload.productId);
-      const nextProducts = wasUsed
+      const shouldArchive = wasUsed || !existing.isCustom;
+      const nextProducts = shouldArchive
         ? state.products.map((product) =>
             product.id === action.payload.productId
               ? {
@@ -309,8 +350,22 @@ function reducer(state: HydratedState, action: Action): HydratedState {
 type StoreValue = {
   state: HydratedState;
   setSelectedUser: (userId: string) => void;
-  addMealItem: (payload: { userId: string; date: string; mealType: MealType; productId: string; grams: number }) => void;
-  updateMealItem: (payload: { itemId: string; grams?: number; mealType?: MealType }) => void;
+  addMealItem: (payload: {
+    userId: string;
+    date: string;
+    mealType: MealType;
+    productId: string;
+    grams: number;
+    quantityMode?: QuantityMode;
+    servings?: number | null;
+  }) => void;
+  updateMealItem: (payload: {
+    itemId: string;
+    grams?: number;
+    mealType?: MealType;
+    quantityMode?: QuantityMode;
+    servings?: number | null;
+  }) => void;
   deleteMealItem: (itemId: string) => void;
   createProfile: (payload: ProfileInput) => void;
   updateProfile: (userId: string, changes: Partial<ProfileInput>) => void;

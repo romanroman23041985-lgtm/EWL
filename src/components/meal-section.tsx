@@ -7,13 +7,16 @@ export function MealSection({
   mealType,
   rows,
   onAdd,
-  onUpdateGrams,
+  onUpdateQuantity,
   onDelete,
 }: {
   mealType: MealType;
   rows: DayMealRow[];
   onAdd: () => void;
-  onUpdateGrams: (itemId: string, grams: number) => void;
+  onUpdateQuantity: (
+    itemId: string,
+    payload: { grams: number; quantityMode?: "grams" | "piece"; servings?: number | null },
+  ) => void;
   onDelete: (itemId: string) => void;
 }) {
   const totals = getMealTotals(rows);
@@ -49,9 +52,9 @@ export function MealSection({
         <div className="mt-4 space-y-3">
           {rows.map((row) => (
             <MealItemRow
-              key={row.item.id}
+              key={`${row.item.id}-${row.item.grams}-${row.item.servings ?? "g"}`}
               row={row}
-              onUpdateGrams={(grams) => onUpdateGrams(row.item.id, grams)}
+              onUpdateQuantity={(payload) => onUpdateQuantity(row.item.id, payload)}
               onDelete={() => onDelete(row.item.id)}
             />
           ))}

@@ -37,8 +37,8 @@ export function ProductFormSheet({
             </h3>
             <p className="mt-1 text-sm leading-6 text-slate-500">
               {mode === "create"
-                ? "Добавьте свой продукт, и он сразу появится в поиске."
-                : "Меняйте только пользовательские продукты. История старых дней сохранится."}
+                ? "Добавьте продукт в свою базу, и он сразу появится в поиске."
+                : "Можно менять локальную карточку продукта, и изменения сразу попадут в приложение."}
             </p>
           </div>
           <button
@@ -67,9 +67,69 @@ export function ProductFormSheet({
               className={inputClass}
               value={draft.icon}
               onChange={(event) => setDraft({ ...draft, icon: event.target.value })}
-              placeholder="Опционально: 🧀"
+              placeholder="Опционально: 🥗"
             />
           </label>
+
+          <div>
+            <div className="text-sm font-medium text-slate-600">Как добавлять продукт</div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setDraft({ ...draft, unitMode: "grams", unitLabel: "", gramsPerUnit: "" })}
+                className={`min-h-11 rounded-[1rem] px-4 py-3 text-sm font-semibold ${
+                  draft.unitMode === "grams"
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                По граммам
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    unitMode: "piece",
+                    unitLabel: draft.unitLabel || "шт.",
+                    gramsPerUnit: draft.gramsPerUnit || "100",
+                  })
+                }
+                className={`min-h-11 rounded-[1rem] px-4 py-3 text-sm font-semibold ${
+                  draft.unitMode === "piece"
+                    ? "bg-[var(--color-accent)] text-white"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                По штукам
+              </button>
+            </div>
+          </div>
+
+          {draft.unitMode === "piece" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm font-medium text-slate-600">
+                Единица
+                <input
+                  className={inputClass}
+                  value={draft.unitLabel}
+                  onChange={(event) => setDraft({ ...draft, unitLabel: event.target.value })}
+                  placeholder="кусок"
+                />
+              </label>
+              <label className="text-sm font-medium text-slate-600">
+                Граммов в 1 шт.
+                <input
+                  className={inputClass}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={draft.gramsPerUnit}
+                  onChange={(event) => setDraft({ ...draft, gramsPerUnit: event.target.value })}
+                />
+              </label>
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm font-medium text-slate-600">
@@ -123,7 +183,9 @@ export function ProductFormSheet({
         <div className="mt-4 rounded-[1.25rem] bg-[var(--color-mint-soft)] px-4 py-3 text-sm text-slate-600">
           <div className="font-semibold text-slate-800">Калории</div>
           <div className="mt-1">
-            {draft.kcalPer100.trim() ? `Использую ${draft.kcalPer100} ккал на 100 г.` : `Автоматически рассчитаю ${autoKcal} ккал по формуле 4/9/4.`}
+            {draft.kcalPer100.trim()
+              ? `Использую ${draft.kcalPer100} ккал на 100 г.`
+              : `Автоматически считаю ${autoKcal} ккал по формуле 4/9/4.`}
           </div>
         </div>
 
@@ -136,7 +198,7 @@ export function ProductFormSheet({
         {mode === "edit" && onDelete ? (
           <div className="mt-4 rounded-[1.25rem] bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-500">
             {usageCount > 0
-              ? "Если удалить этот продукт, он станет архивным и останется в старых записях."
+              ? "Если удалить этот продукт, он станет архивным и сохранится в старых записях."
               : "Этот продукт пока не использовался, поэтому его можно удалить полностью."}
           </div>
         ) : null}

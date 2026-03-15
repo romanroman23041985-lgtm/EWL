@@ -2,38 +2,57 @@
 
 import { useState } from "react";
 import { ProductAvatar } from "@/components/product-avatar";
+import {
+  formatAmountValue,
+  formatMealItemQuantity,
+  getMealItemAmount,
+  getProductQuantityMode,
+  toMealItemQuantity,
+} from "@/lib/products";
 import type { DayMealRow } from "@/lib/types";
 
 export function MealItemRow({
   row,
-  onUpdateGrams,
+  onUpdateQuantity,
   onDelete,
 }: {
   row: DayMealRow;
-  onUpdateGrams: (grams: number) => void;
+  onUpdateQuantity: (payload: { grams: number; quantityMode?: "grams" | "piece"; servings?: number | null }) => void;
   onDelete: () => void;
 }) {
-  const [draft, setDraft] = useState(String(row.item.grams));
+  const mode = getProductQuantityMode(row.product);
+  const currentAmount = getMealItemAmount(row.product, row.item);
+  const [draft, setDraft] = useState(formatAmountValue(currentAmount));
 
-  const commitGrams = (value: string) => {
+  const commitAmount = (value: string) => {
     const next = Number(value.replace(",", "."));
     if (!Number.isFinite(next) || next <= 0) {
-      setDraft(String(row.item.grams));
+      setDraft(formatAmountValue(currentAmount));
       return;
     }
 
-    const normalized = Math.round(next);
-    setDraft(String(normalized));
-    if (normalized !== row.item.grams) {
-      onUpdateGrams(normalized);
+    const normalized = mode === "piece" ? Math.round(next * 10) / 10 : Math.round(next);
+    const nextQuantity = toMealItemQuantity(row.product, normalized);
+    setDraft(formatAmountValue(normalized));
+
+    if (
+      nextQuantity.grams !== row.item.grams ||
+      nextQuantity.quantityMode !== (row.item.quantityMode ?? "grams") ||
+      (nextQuantity.servings ?? null) !== (row.item.servings ?? null)
+    ) {
+      onUpdateQuantity(nextQuantity);
     }
   };
 
   const stepChange = (step: number) => {
-    const nextValue = Math.max(1, row.item.grams + step);
-    setDraft(String(nextValue));
-    onUpdateGrams(nextValue);
+    const draftValue = Number(draft.replace(",", "."));
+    const baseValue = Number.isFinite(draftValue) && draftValue > 0 ? draftValue : currentAmount;
+    const nextValue = Math.max(0.1, Math.round((baseValue + step) * 10) / 10);
+    setDraft(formatAmountValue(nextValue));
+    onUpdateQuantity(toMealItemQuantity(row.product, nextValue));
   };
+
+  const steps = mode === "piece" ? [-1, -0.5, 0.5, 1] : [-10, -5, 5, 10];
 
   return (
     <div className="rounded-[1.5rem] bg-white/88 p-4">
@@ -65,53 +84,53 @@ export function MealItemRow({
             <div className="rounded-[1rem] bg-slate-50 px-3 py-2">Б {row.nutrition.protein}</div>
             <div className="rounded-[1rem] bg-slate-50 px-3 py-2">Ж {row.nutrition.fat}</div>
             <div className="rounded-[1rem] bg-slate-50 px-3 py-2">У {row.nutrition.carbs}</div>
-            <div className="rounded-[1rem] bg-slate-50 px-3 py-2">{row.item.grams} г</div>
+            <div className="rounded-[1rem] bg-slate-50 px-3 py-2">{formatMealItemQuantity(row.product, row.item)}</div>
           </div>
 
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 grid grid-cols-[auto_auto_1fr_auto_auto] items-center gap-2">
             <button
               type="button"
-              onClick={() => stepChange(-10)}
+              onClick={() => stepChange(steps[0])}
               className="h-11 rounded-[1rem] bg-slate-100 px-3 text-sm font-semibold text-slate-700"
             >
-              -10
+              {steps[0]}
             </button>
             <button
               type="button"
-              onClick={() => stepChange(-5)}
+              onClick={() => stepChange(steps[1])}
               className="h-11 rounded-[1rem] bg-slate-100 px-3 text-sm font-semibold text-slate-700"
             >
-              -5
+              {steps[1]}
             </button>
             <input
-              key={`${row.item.id}-${row.item.grams}`}
+              key={`${row.item.id}-${row.item.grams}-${row.item.servings ?? "g"}`}
               type="number"
-              min="1"
-              step="1"
+              min="0.1"
+              step={mode === "piece" ? "0.5" : "1"}
               inputMode="decimal"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              onBlur={() => commitGrams(draft)}
+              onBlur={() => commitAmount(draft)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.currentTarget.blur();
                 }
               }}
-              className="h-11 min-w-0 flex-1 rounded-[1rem] border border-[var(--color-outline)] bg-white px-3 text-center text-base font-semibold outline-none"
+              className="h-11 min-w-0 rounded-[1rem] border border-[var(--color-outline)] bg-white px-3 text-center text-base font-semibold outline-none"
             />
             <button
               type="button"
-              onClick={() => stepChange(5)}
+              onClick={() => stepChange(steps[2])}
               className="h-11 rounded-[1rem] bg-[var(--color-mint-soft)] px-3 text-sm font-semibold text-[var(--color-mint)]"
             >
-              +5
+              +{steps[2]}
             </button>
             <button
               type="button"
-              onClick={() => stepChange(10)}
+              onClick={() => stepChange(steps[3])}
               className="h-11 rounded-[1rem] bg-[var(--color-mint-soft)] px-3 text-sm font-semibold text-[var(--color-mint)]"
             >
-              +10
+              +{steps[3]}
             </button>
           </div>
         </div>

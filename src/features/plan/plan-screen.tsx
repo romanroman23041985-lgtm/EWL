@@ -6,7 +6,7 @@ import { DateSwitcher } from "@/components/date-switcher";
 import { EmptyState } from "@/components/empty-state";
 import { MealSection } from "@/components/meal-section";
 import { ProductSearchSheet } from "@/components/product-search-sheet";
-import { UserSwitcher } from "@/components/user-switcher";
+import { ProfileFocusCard } from "@/components/profile-focus-card";
 import { mealOrder } from "@/lib/constants";
 import { clampDateKey, formatFullDate } from "@/lib/date";
 import {
@@ -99,12 +99,15 @@ export function PlanScreen({ initialDateParam }: { initialDateParam?: string }) 
         </div>
       </section>
 
-      <UserSwitcher users={state.profiles} selectedUserId={user.id} onSelect={setSelectedUser} />
-
-      <DateSwitcher
-        date={currentDate}
-        onChange={(nextDate) => router.replace(`/plan?date=${nextDate}`, { scroll: false })}
+      <ProfileFocusCard
+        users={state.profiles}
+        selectedUserId={user.id}
+        onSelect={setSelectedUser}
+        title="Активный профиль"
+        description="План ниже редактируется только для выбранного профиля."
       />
+
+      <DateSwitcher date={currentDate} onChange={(nextDate) => router.replace(`/plan?date=${nextDate}`, { scroll: false })} />
 
       {mealOrder.map((mealType) => (
         <MealSection
@@ -116,7 +119,7 @@ export function PlanScreen({ initialDateParam }: { initialDateParam?: string }) 
             setSheetVersion((value) => value + 1);
             setSheetOpen(true);
           }}
-          onUpdateGrams={(itemId, grams) => updateMealItem({ itemId, grams })}
+          onUpdateQuantity={(itemId, payload) => updateMealItem({ itemId, ...payload })}
           onDelete={(itemId) => deleteMealItem(itemId)}
         />
       ))}
@@ -183,9 +186,7 @@ export function PlanScreen({ initialDateParam }: { initialDateParam?: string }) 
         recentProducts={recentProducts}
         initialMealType={sheetMealType}
         onClose={() => setSheetOpen(false)}
-        onSubmit={({ mealType, productId, grams }) =>
-          addMealItem({ userId: user.id, date: currentDate, mealType, productId, grams })
-        }
+        onSubmit={(payload) => addMealItem({ userId: user.id, date: currentDate, ...payload })}
         onCreateProduct={(draft) => createProduct(draft)}
         onUpdateProduct={(productId, draft) => updateProduct(productId, draft)}
         onDeleteProduct={(productId) => deleteProduct(productId)}

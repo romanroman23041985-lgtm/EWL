@@ -1,3 +1,4 @@
+import { mergeBuiltInProducts } from "@/lib/base-products";
 import { STORAGE_KEY } from "@/lib/constants";
 import { buildSeedState } from "@/lib/seed";
 import type { PersistedAppState } from "@/lib/types";
@@ -30,7 +31,10 @@ export const localAppRepository: AppRepository = {
     try {
       const parsed = JSON.parse(raw) as unknown;
       if (isPersistedState(parsed)) {
-        return parsed;
+        return {
+          ...parsed,
+          products: mergeBuiltInProducts(parsed.products),
+        };
       }
     } catch {
       return buildSeedState();

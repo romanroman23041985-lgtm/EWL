@@ -172,10 +172,15 @@ export function getMonthStats(state: PersistedAppState, user: UserProfile | null
       daysAbove: 0,
       daysWithin: 0,
       daysLogged: 0,
+      totalTargetKcal: 0,
+      totalActualKcal: 0,
+      totalBalanceKcal: 0,
     };
   }
 
   const totals = sumNutrition(filled.map((entry) => entry.totals));
+  const totalTargetKcal = filled.reduce((sum, entry) => sum + entry.target.kcal, 0);
+  const totalActualKcal = totals.kcal;
 
   return {
     average: {
@@ -187,5 +192,8 @@ export function getMonthStats(state: PersistedAppState, user: UserProfile | null
     daysAbove: filled.filter((entry) => entry.isOver).length,
     daysWithin: filled.filter((entry) => !entry.isOver).length,
     daysLogged: filled.length,
+    totalTargetKcal,
+    totalActualKcal,
+    totalBalanceKcal: totalTargetKcal - totalActualKcal,
   };
 }

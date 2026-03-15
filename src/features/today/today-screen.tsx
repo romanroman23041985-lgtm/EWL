@@ -6,7 +6,7 @@ import { DaySummaryCard } from "@/components/day-summary-card";
 import { EmptyState } from "@/components/empty-state";
 import { MacroProgressCard } from "@/components/macro-progress-card";
 import { ProductSearchSheet } from "@/components/product-search-sheet";
-import { UserSwitcher } from "@/components/user-switcher";
+import { ProfileFocusCard } from "@/components/profile-focus-card";
 import { mealLabels, mealOrder } from "@/lib/constants";
 import { formatFullDate, getTodayDate } from "@/lib/date";
 import {
@@ -20,14 +20,7 @@ import type { MealType } from "@/lib/types";
 import { useAppStore } from "@/store/app-store";
 
 export function TodayScreen() {
-  const {
-    state,
-    addMealItem,
-    createProduct,
-    deleteProduct,
-    setSelectedUser,
-    updateProduct,
-  } = useAppStore();
+  const { state, addMealItem, createProduct, deleteProduct, setSelectedUser, updateProduct } = useAppStore();
   const [sheetMealType, setSheetMealType] = useState<MealType>("breakfast");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetVersion, setSheetVersion] = useState(0);
@@ -95,7 +88,13 @@ export function TodayScreen() {
         </div>
       </section>
 
-      <UserSwitcher users={state.profiles} selectedUserId={user.id} onSelect={setSelectedUser} />
+      <ProfileFocusCard
+        users={state.profiles}
+        selectedUserId={user.id}
+        onSelect={setSelectedUser}
+        title="Профиль дня"
+        description="Сейчас приложение считает рацион только для этого профиля."
+      />
 
       <section className="grid grid-cols-2 gap-3">
         <MacroProgressCard label="Калории" consumed={summary.totals.kcal} target={summary.target?.kcal ?? 0} unit="" tint="pink" />
@@ -108,12 +107,9 @@ export function TodayScreen() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Быстро добавить еду</h2>
-            <p className="mt-1 text-sm text-slate-500">Нажмите на нужный прием пищи и добавьте продукт без лишних переходов.</p>
+            <p className="mt-1 text-sm text-slate-500">Выберите прием пищи и добавьте продукт без лишних переходов.</p>
           </div>
-          <Link
-            href={`/plan?date=${today}`}
-            className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-          >
+          <Link href={`/plan?date=${today}`} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700">
             К плану
           </Link>
         </div>
@@ -139,7 +135,7 @@ export function TodayScreen() {
       {!summary.items.length ? (
         <EmptyState
           title="Сегодня еще нет записей"
-          description="Добавьте первый продукт, и здесь сразу появятся итог за день, прогресс по КБЖУ и баланс."
+          description="Добавьте первый продукт, и здесь сразу появится итог за день, прогресс по КБЖУ и баланс."
           action={
             <button
               type="button"
@@ -165,9 +161,7 @@ export function TodayScreen() {
         recentProducts={recentProducts}
         initialMealType={sheetMealType}
         onClose={() => setSheetOpen(false)}
-        onSubmit={({ mealType, productId, grams }) =>
-          addMealItem({ userId: user.id, date: today, mealType, productId, grams })
-        }
+        onSubmit={(payload) => addMealItem({ userId: user.id, date: today, ...payload })}
         onCreateProduct={(draft) => createProduct(draft)}
         onUpdateProduct={(productId, draft) => updateProduct(productId, draft)}
         onDeleteProduct={(productId) => deleteProduct(productId)}
