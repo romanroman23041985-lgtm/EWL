@@ -142,8 +142,6 @@ export function ProfileScreen() {
             </div>
           )}
         </section>
-
-        <BackupNote />
       </div>
     );
   }
@@ -167,7 +165,7 @@ export function ProfileScreen() {
             onClick={() => setShowEditProfile((value) => !value)}
             className="rounded-[1rem] bg-[var(--color-accent)] px-4 py-3 text-sm font-semibold text-white"
           >
-            {showEditProfile ? "Скрыть" : "Зайти"}
+            {showEditProfile ? "Закрыть" : "Зайти"}
           </button>
         </div>
 
@@ -209,8 +207,6 @@ export function ProfileScreen() {
           </div>
         ) : null}
       </section>
-
-      <BackupNote />
 
       <section className="app-card rounded-[2rem] p-5">
         <div className="flex items-center justify-between gap-3">
@@ -579,16 +575,5 @@ function CurrentProfileForm({
         </button>
       ) : null}
     </div>
-  );
-}
-
-function BackupNote() {
-  return (
-    <section className="app-card rounded-[2rem] p-5">
-      <h2 className="text-lg font-semibold text-slate-900">Сохранность данных</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">
-        Все профили, продукты и дни сохраняются на этом устройстве автоматически. Приложение также делает локальный резервный снимок раз в день, чтобы важные записи не пропали при сбое.
-      </p>
-    </section>
   );
 }

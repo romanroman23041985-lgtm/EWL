@@ -18,6 +18,24 @@
   --shadow-soft: 0 16px 45px rgba(90, 105, 115, 0.14);
 }
 
+:root[data-theme="beige"] {
+  --color-shell: #e9e1d6;
+  --color-surface: rgba(247, 242, 235, 0.98);
+  --color-surface-strong: #fffaf4;
+  --color-surface-mint: #ece6db;
+  --color-text: #2c2823;
+  --color-subtle: #655f58;
+  --color-outline: rgba(116, 104, 92, 0.22);
+  --color-accent: #8f7862;
+  --color-accent-soft: #e7dbcf;
+  --color-mint: #2f8b76;
+  --color-mint-soft: #dfece7;
+  --color-danger: #b95757;
+  --color-danger-soft: #f2dfdc;
+  --color-warning: #b6884f;
+  --shadow-soft: 0 16px 45px rgba(88, 79, 70, 0.14);
+}
+
 @theme inline {
   --font-sans: "Aptos", "Trebuchet MS", "Segoe UI", sans-serif;
   --font-display: "Georgia", "Times New Roman", serif;
@@ -31,6 +49,13 @@ html {
   background:
     radial-gradient(circle at top left, rgba(42, 166, 151, 0.22), transparent 32%),
     radial-gradient(circle at top right, rgba(239, 93, 141, 0.18), transparent 28%),
+    var(--color-shell);
+}
+
+html[data-theme="beige"] {
+  background:
+    radial-gradient(circle at top left, rgba(143, 120, 98, 0.18), transparent 34%),
+    radial-gradient(circle at top right, rgba(210, 190, 171, 0.22), transparent 30%),
     var(--color-shell);
 }
 
