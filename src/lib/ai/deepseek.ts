@@ -39,6 +39,57 @@ export type AiHelperResult =
   | { mode: "day"; answer: string }
   | { mode: "product"; answer: string; product: ProductAiSuggestion };
 
+export function inferProductRequest(text: string) {
+  const original = text.trim();
+  if (!original) {
+    return { productName: "", productContext: "" };
+  }
+
+  const normalized = original.toLowerCase();
+  const hasProductIntent =
+    normalized.includes("данные по") ||
+    normalized.includes("нутриент") ||
+    normalized.includes("кбжу") ||
+    normalized.includes("бжу") ||
+    normalized.includes("калорий") ||
+    normalized.includes("магний") ||
+    normalized.includes("желез") ||
+    normalized.includes("цинк") ||
+    normalized.includes("омега") ||
+    normalized.includes("витамин") ||
+    normalized.includes("создай продукт") ||
+    normalized.includes("добавь продукт") ||
+    normalized.includes("добавить продукт") ||
+    normalized.includes("продукт ") ||
+    original.split(/\s+/).length <= 3;
+
+  if (!hasProductIntent) {
+    return { productName: "", productContext: "" };
+  }
+
+  let productName = original
+    .replace(/^(ну\s+)?(хорошо\s+)?/i, "")
+    .replace(/^(дай|подбери|найди|добавь|добавить|создай|покажи|проверь|помоги)\s+(мне\s+)?/i, "")
+    .replace(/^(данные|нутриенты|кбжу|бжу|калорийность|пищевую ценность)\s+(по|для)\s+/i, "")
+    .replace(/^(продукт\s+)?(по|для)\s+/i, "")
+    .replace(/^(продукт\s+)/i, "")
+    .replace(/^(о|об)\s+/i, "")
+    .replace(/\s+(чтобы|чтоб|и)\s+.*$/i, "")
+    .replace(/[?!.]+$/g, "")
+    .trim();
+
+  productName = productName
+    .replace(/^(данные\s+по\s+)/i, "")
+    .replace(/^(нутриенты\s+по\s+)/i, "")
+    .replace(/^(для\s+)/i, "")
+    .trim();
+
+  return {
+    productName,
+    productContext: original,
+  };
+}
+
 function extractJsonObject(text: string) {
   const fenced = text.match(/```json\s*([\s\S]*?)```/i);
   const source = fenced?.[1] ?? text;

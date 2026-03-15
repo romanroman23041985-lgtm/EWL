@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { askAiHelper, type AiHelperMode, type ProductAiSuggestion } from "@/lib/ai/deepseek";
+import {
+  askAiHelper,
+  inferProductRequest,
+  type AiHelperMode,
+  type ProductAiSuggestion,
+} from "@/lib/ai/deepseek";
 import { loadLocalDeepSeekApiKey, saveLocalDeepSeekApiKey } from "@/lib/ai/storage";
 import type { ProductDraft } from "@/lib/types";
 
@@ -40,7 +45,7 @@ export function AiHelperSheet({
   onClose: () => void;
   onCreateProduct: (draft: ProductDraft) => void;
 }) {
-  const [mode, setMode] = useState<AiHelperMode>("app");
+  const [mode, setMode] = useState<AiHelperMode>("product");
   const [apiKey, setApiKey] = useState("");
   const [appQuestion, setAppQuestion] = useState("");
   const [productName, setProductName] = useState("");
@@ -64,7 +69,7 @@ export function AiHelperSheet({
   const helperHint = useMemo(
     () =>
       mode === "app"
-        ? "Спроси только про это приложение: где что нажать, как добавить еду, как создать продукт."
+        ? "Можно спросить про приложение. А если просто написать продукт вроде «миндаль», я сам попробую распознать его и собрать нутриенты."
         : "Напиши название продукта и, если хочешь, уточни бренд, порцию или что это за штука.",
     [mode],
   );
@@ -163,7 +168,7 @@ export function AiHelperSheet({
             <textarea
               value={appQuestion}
               onChange={(event) => setAppQuestion(event.target.value)}
-              placeholder={`Например: как добавить свой продукт на экране ${currentPath}?`}
+              placeholder={`Например: как добавить свой продукт на экране ${currentPath}? Или просто: миндаль`}
               className="theme-input min-h-28 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
             />
           </div>
@@ -239,17 +244,28 @@ export function AiHelperSheet({
               setProductSuggestion(null);
 
               try {
+                const inferred = mode === "app" ? inferProductRequest(appQuestion) : null;
+                const effectiveMode =
+                  mode === "app" && inferred?.productName.trim() ? "product" : mode;
+
                 const result = await askAiHelper({
                   apiKey,
-                  mode,
+                  mode: effectiveMode,
                   currentPath,
-                  question: mode === "app" ? appQuestion : `Помоги заполнить нутриенты продукта для приложения.`,
-                  productName,
-                  productContext,
+                  question:
+                    effectiveMode === "app"
+                      ? appQuestion
+                      : `Помоги заполнить нутриенты продукта для приложения.`,
+                  productName: effectiveMode === "product" ? (mode === "product" ? productName : inferred?.productName) : undefined,
+                  productContext: effectiveMode === "product" ? (mode === "product" ? productContext : inferred?.productContext) : undefined,
                 });
 
                 if (result.mode === "product") {
-                  setAnswer(result.answer);
+                  setAnswer(
+                    mode === "app"
+                      ? `Понял это как запрос по продукту. ${result.answer}`
+                      : result.answer,
+                  );
                   setProductSuggestion(result.product);
                 } else {
                   setAnswer(result.answer);
