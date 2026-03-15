@@ -13,7 +13,22 @@ export function getProductInitial(name: string) {
 }
 
 export function getVisibleProducts(products: Product[]) {
-  return products.filter((product) => !product.archivedAt);
+  const deduped = new Map<string, Product>();
+
+  for (const product of products) {
+    if (product.archivedAt) {
+      continue;
+    }
+
+    const key = getProductDedupKey(product);
+    const existing = deduped.get(key);
+
+    if (!existing || compareProductPriority(product, existing) > 0) {
+      deduped.set(key, product);
+    }
+  }
+
+  return [...deduped.values()];
 }
 
 export function rankProducts(products: Product[], query: string) {
@@ -56,6 +71,168 @@ function normalizeSearchValue(value: string) {
 
 function collapseSearchValue(value: string) {
   return normalizeSearchValue(value).replace(/\s+/g, "");
+}
+
+function normalizeDedupName(value: string) {
+  const normalized = normalizeSearchValue(value)
+    .replace(/\b100\s*г\b/g, "")
+    .replace(/\b(\d+)\s*шт\b/g, "")
+    .trim();
+
+  const aliases = new Map<string, string>([
+    ["бананы", "банан"],
+    ["яблоки", "яблоко"],
+    ["огурцы", "огурец"],
+    ["помидоры", "помидор"],
+    ["томаты", "помидор"],
+    ["яйца", "яйцо"],
+    ["яйцо куриное", "яйцо"],
+    ["чоко пай", "чокопай"],
+  ]);
+
+  return aliases.get(normalized) ?? normalized;
+}
+
+export function getProductCategoryKey(product: Product) {
+  const source = `${product.name} ${product.notes ?? ""} ${(product.searchTerms ?? []).join(" ")}`.toLowerCase().replaceAll("ё", "е");
+
+  if (
+    source.includes("банан") ||
+    source.includes("яблок") ||
+    source.includes("груш") ||
+    source.includes("апельс") ||
+    source.includes("мандари") ||
+    source.includes("киви") ||
+    source.includes("ягод") ||
+    source.includes("фрукт")
+  ) {
+    return "fruit";
+  }
+
+  if (
+    source.includes("овощ") ||
+    source.includes("огур") ||
+    source.includes("помид") ||
+    source.includes("салат") ||
+    source.includes("морков") ||
+    source.includes("капуст") ||
+    source.includes("перец")
+  ) {
+    return "vegetable";
+  }
+
+  if (source.includes("яйц")) {
+    return "egg";
+  }
+
+  if (
+    source.includes("молок") ||
+    source.includes("сыр") ||
+    source.includes("твор") ||
+    source.includes("кеф") ||
+    source.includes("йогур") ||
+    source.includes("смет")
+  ) {
+    return "dairy";
+  }
+
+  if (
+    source.includes("лосос") ||
+    source.includes("тунец") ||
+    source.includes("рыб") ||
+    source.includes("селед") ||
+    source.includes("сельд") ||
+    source.includes("кревет")
+  ) {
+    return "fish";
+  }
+
+  if (
+    source.includes("кур") ||
+    source.includes("индей") ||
+    source.includes("говя") ||
+    source.includes("свин") ||
+    source.includes("мяс") ||
+    source.includes("ветчин") ||
+    source.includes("колбас") ||
+    source.includes("сосиск")
+  ) {
+    return "meat";
+  }
+
+  if (
+    source.includes("рис") ||
+    source.includes("греч") ||
+    source.includes("овся") ||
+    source.includes("круп") ||
+    source.includes("макарон") ||
+    source.includes("булгур") ||
+    source.includes("нут") ||
+    source.includes("чечев") ||
+    source.includes("фасол")
+  ) {
+    return "grain";
+  }
+
+  if (source.includes("хлеб") || source.includes("тост") || source.includes("лаваш") || source.includes("булк")) {
+    return "bread";
+  }
+
+  if (source.includes("масл")) {
+    return "fat";
+  }
+
+  if (
+    source.includes("орех") ||
+    source.includes("миндал") ||
+    source.includes("фисташ") ||
+    source.includes("арахис") ||
+    source.includes("семеч")
+  ) {
+    return "nuts";
+  }
+
+  if (source.includes("кофе") || source.includes("чай") || source.includes("сок") || source.includes("напит")) {
+    return "drink";
+  }
+
+  if (
+    source.includes("шокол") ||
+    source.includes("конф") ||
+    source.includes("слад") ||
+    source.includes("чоко") ||
+    source.includes("торт") ||
+    source.includes("печен") ||
+    source.includes("пирож")
+  ) {
+    return "sweet";
+  }
+
+  return "neutral";
+}
+
+function getProductDedupKey(product: Product) {
+  return `${getProductCategoryKey(product)}:${normalizeDedupName(product.name)}`;
+}
+
+function compareProductPriority(left: Product, right: Product) {
+  const leftScore =
+    (left.isCustom ? 1000 : 0) +
+    (left.icon?.trim() ? 100 : 0) +
+    ((left.searchTerms?.length ?? 0) * 10) +
+    (left.notes?.trim() ? 4 : 0) +
+    (left.fiberPer100 || left.magnesiumPer100 || left.ironPer100 || left.zincPer100 || left.omega3Per100 || left.vitaminB12Per100 ? 8 : 0) -
+    left.name.length / 100;
+
+  const rightScore =
+    (right.isCustom ? 1000 : 0) +
+    (right.icon?.trim() ? 100 : 0) +
+    ((right.searchTerms?.length ?? 0) * 10) +
+    (right.notes?.trim() ? 4 : 0) +
+    (right.fiberPer100 || right.magnesiumPer100 || right.ironPer100 || right.zincPer100 || right.omega3Per100 || right.vitaminB12Per100 ? 8 : 0) -
+    right.name.length / 100;
+
+  return leftScore - rightScore;
 }
 
 function getAliasTerms(product: Product) {
