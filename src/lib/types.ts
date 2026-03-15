@@ -6,7 +6,7 @@ export type BuiltInMealType = Exclude<MealType, "custom">;
 
 export type QuantityMode = "grams" | "piece";
 
-export type FormulaMode = "standard" | "custom";
+export type FormulaMode = "lose" | "maintain" | "gain" | "custom";
 
 export interface UserProfile {
   id: string;

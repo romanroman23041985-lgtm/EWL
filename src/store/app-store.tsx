@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useReducer } from "react";
 import { STATE_VERSION } from "@/lib/constants";
+import { normalizeFormulaMode } from "@/lib/macros";
 import { getAutoKcalFromDraft, parseDraftNumber } from "@/lib/products";
 import { localAppRepository } from "@/lib/repository";
 import type {
@@ -94,7 +95,7 @@ function normalizeState(payload: PersistedAppState): PersistedAppState {
     recentProductsByUser: payload.recentProductsByUser ?? {},
     profiles: payload.profiles.map((profile) => ({
       ...profile,
-      formulaMode: profile.formulaMode ?? "custom",
+      formulaMode: normalizeFormulaMode(profile.formulaMode),
       heightCm: profile.heightCm ?? null,
       goalWeightKg: profile.goalWeightKg ?? profile.weightKg,
     })),
@@ -258,7 +259,7 @@ function reducer(state: HydratedState, action: Action): HydratedState {
       const profile = {
         id: createId("profile"),
         ...action.payload,
-        formulaMode: action.payload.formulaMode ?? "standard",
+        formulaMode: normalizeFormulaMode(action.payload.formulaMode),
         heightCm: action.payload.heightCm ?? null,
         goalWeightKg: action.payload.goalWeightKg ?? action.payload.weightKg,
         createdAt: now,
@@ -471,5 +472,17 @@ export function sexLabel(sex: Sex) {
 }
 
 export function formulaLabel(mode: FormulaMode) {
-  return mode === "standard" ? "Стандартная" : "Своя";
+  if (mode === "lose") {
+    return "Похудение";
+  }
+
+  if (mode === "gain") {
+    return "Набор массы";
+  }
+
+  if (mode === "custom") {
+    return "Своя";
+  }
+
+  return "Поддержание";
 }

@@ -1,5 +1,5 @@
-import { STANDARD_FORMULA } from "@/lib/constants";
-import type { FormulaCoefficients, NutritionTotals, Product, UserProfile } from "@/lib/types";
+import { FORMULA_PRESETS } from "@/lib/constants";
+import type { FormulaCoefficients, FormulaMode, NutritionTotals, Product, UserProfile } from "@/lib/types";
 
 export function roundMacro(value: number) {
   return Math.round(value * 10) / 10;
@@ -35,6 +35,18 @@ export function getHealthyGoalFloor(heightCm?: number | null) {
   return Math.round(18.5 * heightM * heightM * 10) / 10;
 }
 
+export function normalizeFormulaMode(mode?: string | null): FormulaMode {
+  if (mode === "lose" || mode === "maintain" || mode === "gain" || mode === "custom") {
+    return mode;
+  }
+
+  if (mode === "standard") {
+    return "maintain";
+  }
+
+  return "maintain";
+}
+
 export function getPlanningWeight(profile: UserProfile) {
   const goalWeight = profile.goalWeightKg && profile.goalWeightKg > 0 ? profile.goalWeightKg : profile.weightKg;
   const healthyFloor = getHealthyGoalFloor(profile.heightCm);
@@ -43,9 +55,28 @@ export function getPlanningWeight(profile: UserProfile) {
   return Math.min(profile.weightKg, safeGoal);
 }
 
-export function resolveProfileFormula(profile: Pick<UserProfile, "formulaMode" | "proteinPerKg" | "fatPerKg" | "carbsPerKg">): FormulaCoefficients {
-  if (profile.formulaMode === "standard") {
-    return STANDARD_FORMULA;
+export function getFormulaBaseWeight(profile: UserProfile) {
+  const mode = normalizeFormulaMode(profile.formulaMode);
+  const goalWeight = profile.goalWeightKg && profile.goalWeightKg > 0 ? profile.goalWeightKg : profile.weightKg;
+
+  if (mode === "lose") {
+    return getPlanningWeight(profile);
+  }
+
+  if (mode === "gain") {
+    return Math.max(profile.weightKg, goalWeight);
+  }
+
+  return profile.weightKg;
+}
+
+export function resolveProfileFormula(
+  profile: Pick<UserProfile, "formulaMode" | "proteinPerKg" | "fatPerKg" | "carbsPerKg">,
+): FormulaCoefficients {
+  const mode = normalizeFormulaMode(profile.formulaMode);
+
+  if (mode !== "custom") {
+    return FORMULA_PRESETS[mode];
   }
 
   return {
@@ -56,7 +87,7 @@ export function resolveProfileFormula(profile: Pick<UserProfile, "formulaMode" |
 }
 
 export function calculateTargets(profile: UserProfile): NutritionTotals {
-  const baseWeight = getPlanningWeight(profile);
+  const baseWeight = getFormulaBaseWeight(profile);
   const coefficients = resolveProfileFormula(profile);
   const protein = roundMacro(baseWeight * coefficients.proteinPerKg);
   const fat = roundMacro(baseWeight * coefficients.fatPerKg);

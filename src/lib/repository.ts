@@ -1,5 +1,6 @@
 import { mergeBuiltInProducts } from "@/lib/base-products";
 import { BACKUP_STORAGE_KEY, MAX_LOCAL_BACKUPS, STATE_VERSION, STORAGE_KEY } from "@/lib/constants";
+import { normalizeFormulaMode } from "@/lib/macros";
 import { buildSeedState } from "@/lib/seed";
 import type { PersistedAppState } from "@/lib/types";
 
@@ -43,7 +44,7 @@ function migrateState(state: PersistedAppState): PersistedAppState {
     products: mergeBuiltInProducts(state.products),
     profiles: state.profiles.map((profile) => ({
       ...profile,
-      formulaMode: profile.formulaMode ?? "custom",
+      formulaMode: normalizeFormulaMode(profile.formulaMode),
       heightCm: profile.heightCm ?? null,
       goalWeightKg: profile.goalWeightKg ?? profile.weightKg,
     })),

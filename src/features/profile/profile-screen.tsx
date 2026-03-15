@@ -1,15 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { STANDARD_FORMULA } from "@/lib/constants";
+import { FORMULA_PRESETS } from "@/lib/constants";
 import { calculateTargets, resolveProfileFormula } from "@/lib/macros";
 import { getSelectedUser } from "@/lib/selectors";
 import type { FormulaMode } from "@/lib/types";
-import { formulaLabel, useAppStore, sanitizeNumber } from "@/store/app-store";
+import { formulaLabel, sanitizeNumber, useAppStore } from "@/store/app-store";
 import { UserSwitcher } from "@/components/user-switcher";
 
 const inputClass =
   "mt-2 h-12 w-full rounded-[1rem] border border-[var(--color-outline)] bg-white px-4 text-[15px] outline-none";
+
+const formulaDescriptions: Record<FormulaMode, string> = {
+  lose: "Мягкий дефицит без жестких ограничений.",
+  maintain: "Комфортное удержание текущего веса.",
+  gain: "Спокойный набор массы без лишней спешки.",
+  custom: "Свои Б/Ж/У на кг вручную.",
+};
 
 type ProfileDraft = {
   name: string;
@@ -29,10 +36,10 @@ const emptyDraft: ProfileDraft = {
   heightCm: "",
   weightKg: "",
   goalWeightKg: "",
-  formulaMode: "standard",
-  proteinPerKg: String(STANDARD_FORMULA.proteinPerKg),
-  fatPerKg: String(STANDARD_FORMULA.fatPerKg),
-  carbsPerKg: String(STANDARD_FORMULA.carbsPerKg),
+  formulaMode: "maintain",
+  proteinPerKg: String(FORMULA_PRESETS.maintain.proteinPerKg),
+  fatPerKg: String(FORMULA_PRESETS.maintain.fatPerKg),
+  carbsPerKg: String(FORMULA_PRESETS.maintain.carbsPerKg),
 };
 
 export function ProfileScreen() {
@@ -46,18 +53,18 @@ export function ProfileScreen() {
   const draftHeight = sanitizeNumber(draft.heightCm, 0);
   const draftWeight = sanitizeNumber(draft.weightKg, 0);
   const draftGoalWeight = sanitizeNumber(draft.goalWeightKg, 0);
-  const draftProtein = sanitizeNumber(draft.proteinPerKg, STANDARD_FORMULA.proteinPerKg);
-  const draftFat = sanitizeNumber(draft.fatPerKg, STANDARD_FORMULA.fatPerKg);
-  const draftCarbs = sanitizeNumber(draft.carbsPerKg, STANDARD_FORMULA.carbsPerKg);
+  const draftProtein = sanitizeNumber(draft.proteinPerKg, FORMULA_PRESETS.maintain.proteinPerKg);
+  const draftFat = sanitizeNumber(draft.fatPerKg, FORMULA_PRESETS.maintain.fatPerKg);
+  const draftCarbs = sanitizeNumber(draft.carbsPerKg, FORMULA_PRESETS.maintain.carbsPerKg);
   const draftFormula = useMemo(
     () =>
-      draft.formulaMode === "standard"
-        ? STANDARD_FORMULA
-        : {
+      draft.formulaMode === "custom"
+        ? {
             proteinPerKg: draftProtein,
             fatPerKg: draftFat,
             carbsPerKg: draftCarbs,
-          },
+          }
+        : FORMULA_PRESETS[draft.formulaMode],
     [draft.formulaMode, draftProtein, draftFat, draftCarbs],
   );
   const draftValid =
@@ -173,7 +180,7 @@ export function ProfileScreen() {
           <div className="rounded-[1.25rem] bg-white px-4 py-4">
             <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Цель</div>
             <div className="mt-2 text-2xl font-semibold text-slate-900">{targets.kcal} ккал</div>
-            <div className="mt-2 text-xs text-slate-500">{formulaLabel(selectedUser.formulaMode)} формула</div>
+            <div className="mt-2 text-xs text-slate-500">{formulaLabel(selectedUser.formulaMode)}</div>
           </div>
           <div className="rounded-[1.25rem] bg-white px-4 py-4 text-sm text-slate-600">
             <div>Б {targets.protein}</div>
@@ -183,9 +190,10 @@ export function ProfileScreen() {
         </div>
 
         <div className="mt-4 rounded-[1.35rem] bg-[var(--color-mint-soft)] px-4 py-4 text-sm text-slate-700">
-          <div className="font-semibold text-slate-900">Формула</div>
-          <div className="mt-1">
-            {formulaLabel(selectedUser.formulaMode)} • Б {selectedFormula.proteinPerKg} / Ж {selectedFormula.fatPerKg} / У {selectedFormula.carbsPerKg} на кг
+          <div className="font-semibold text-slate-900">{formulaLabel(selectedUser.formulaMode)}</div>
+          <div className="mt-1">{formulaDescriptions[selectedUser.formulaMode]}</div>
+          <div className="mt-2">
+            Б {selectedFormula.proteinPerKg} / Ж {selectedFormula.fatPerKg} / У {selectedFormula.carbsPerKg} на кг
           </div>
         </div>
 
@@ -267,20 +275,25 @@ function FormulaModeSwitch({
   value: FormulaMode;
   onChange: (mode: FormulaMode) => void;
 }) {
+  const options: FormulaMode[] = ["lose", "maintain", "gain", "custom"];
+
   return (
     <div>
-      <div className="text-sm font-medium text-slate-600">Формула</div>
+      <div className="text-sm font-medium text-slate-600">Режим</div>
       <div className="mt-2 grid grid-cols-2 gap-2">
-        {(["standard", "custom"] as const).map((mode) => (
+        {options.map((mode) => (
           <button
             key={mode}
             type="button"
             onClick={() => onChange(mode)}
-            className={`min-h-11 rounded-[1rem] px-4 py-3 text-sm font-semibold ${
-              value === mode ? "bg-[var(--color-accent)] text-white" : "bg-slate-100 text-slate-600"
+            className={`rounded-[1rem] px-4 py-3 text-left text-sm transition ${
+              value === mode ? "bg-[var(--color-accent)] text-white" : "bg-slate-100 text-slate-700"
             }`}
           >
-            {mode === "standard" ? "Стандартная" : "Своя"}
+            <div className="font-semibold">{formulaLabel(mode)}</div>
+            <div className={`mt-1 text-xs leading-5 ${value === mode ? "text-white/80" : "text-slate-500"}`}>
+              {formulaDescriptions[mode]}
+            </div>
           </button>
         ))}
       </div>
@@ -301,11 +314,16 @@ function FormulaInputs({
   carbsPerKg: string;
   onChange: (value: { proteinPerKg?: string; fatPerKg?: string; carbsPerKg?: string }) => void;
 }) {
-  if (mode === "standard") {
+  if (mode !== "custom") {
+    const preset = FORMULA_PRESETS[mode];
+
     return (
       <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4 text-sm text-slate-600">
-        <div className="font-semibold text-slate-900">Стандартная формула</div>
-        <div className="mt-2">Б {STANDARD_FORMULA.proteinPerKg} / Ж {STANDARD_FORMULA.fatPerKg} / У {STANDARD_FORMULA.carbsPerKg} на кг</div>
+        <div className="font-semibold text-slate-900">{formulaLabel(mode)}</div>
+        <div className="mt-1">{formulaDescriptions[mode]}</div>
+        <div className="mt-2">
+          Б {preset.proteinPerKg} / Ж {preset.fatPerKg} / У {preset.carbsPerKg} на кг
+        </div>
       </div>
     );
   }
