@@ -73,9 +73,18 @@ export interface NutritionTotals {
   kcal: number;
 }
 
+export interface CompanionState {
+  unlockedAchievementIds: string[];
+  lastMessageKey?: string | null;
+  lastMessageAt?: string | null;
+  lastMessageText?: string | null;
+  lastMessageMood?: "normal" | "celebration" | "comfort" | null;
+}
+
 export interface PersistedAppState {
   version: number;
   themeMode: ThemeMode;
+  companion: CompanionState;
   selectedUserId: string;
   profiles: UserProfile[];
   products: Product[];

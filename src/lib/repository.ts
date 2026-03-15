@@ -42,6 +42,13 @@ function migrateState(state: PersistedAppState): PersistedAppState {
     ...state,
     version: STATE_VERSION,
     themeMode: state.themeMode === "beige" ? "beige" : "rose",
+    companion: {
+      unlockedAchievementIds: state.companion?.unlockedAchievementIds ?? [],
+      lastMessageKey: state.companion?.lastMessageKey ?? null,
+      lastMessageAt: state.companion?.lastMessageAt ?? null,
+      lastMessageText: state.companion?.lastMessageText ?? null,
+      lastMessageMood: state.companion?.lastMessageMood ?? null,
+    },
     products: mergeBuiltInProducts(state.products),
     profiles: state.profiles.map((profile) => ({
       ...profile,

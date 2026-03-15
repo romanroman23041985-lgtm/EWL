@@ -6,6 +6,7 @@ import { normalizeFormulaMode } from "@/lib/macros";
 import { getAutoKcalFromDraft, parseDraftNumber } from "@/lib/products";
 import { localAppRepository } from "@/lib/repository";
 import type {
+  CompanionState,
   FormulaMode,
   MealType,
   PersistedAppState,
@@ -41,6 +42,7 @@ type ProductInput = {
 type Action =
   | { type: "hydrate"; payload: PersistedAppState }
   | { type: "setThemeMode"; payload: ThemeMode }
+  | { type: "updateCompanion"; payload: Partial<CompanionState> }
   | { type: "setSelectedUser"; payload: string }
   | {
       type: "addMealItem";
@@ -78,6 +80,13 @@ function createEmptyState(): HydratedState {
   return {
     version: STATE_VERSION,
     themeMode: "rose",
+    companion: {
+      unlockedAchievementIds: [],
+      lastMessageKey: null,
+      lastMessageAt: null,
+      lastMessageText: null,
+      lastMessageMood: null,
+    },
     selectedUserId: "",
     profiles: [],
     products: [],
@@ -96,6 +105,13 @@ function normalizeState(payload: PersistedAppState): PersistedAppState {
   return {
     ...payload,
     themeMode: payload.themeMode === "beige" ? "beige" : "rose",
+    companion: {
+      unlockedAchievementIds: payload.companion?.unlockedAchievementIds ?? [],
+      lastMessageKey: payload.companion?.lastMessageKey ?? null,
+      lastMessageAt: payload.companion?.lastMessageAt ?? null,
+      lastMessageText: payload.companion?.lastMessageText ?? null,
+      lastMessageMood: payload.companion?.lastMessageMood ?? null,
+    },
     recentProductsByUser: payload.recentProductsByUser ?? {},
     profiles: payload.profiles.map((profile) => ({
       ...profile,
@@ -187,6 +203,15 @@ function reducer(state: HydratedState, action: Action): HydratedState {
       return {
         ...state,
         themeMode: action.payload,
+      };
+    case "updateCompanion":
+      return {
+        ...state,
+        companion: {
+          ...state.companion,
+          ...action.payload,
+          unlockedAchievementIds: action.payload.unlockedAchievementIds ?? state.companion.unlockedAchievementIds,
+        },
       };
     case "setSelectedUser":
       return {
@@ -379,6 +404,7 @@ function reducer(state: HydratedState, action: Action): HydratedState {
 type StoreValue = {
   state: HydratedState;
   setThemeMode: (themeMode: ThemeMode) => void;
+  updateCompanion: (payload: Partial<CompanionState>) => void;
   setSelectedUser: (userId: string) => void;
   addMealItem: (payload: {
     userId: string;
@@ -434,6 +460,7 @@ export function AppStoreProvider({ children }: Readonly<{ children: React.ReactN
     void localAppRepository.save({
       version: state.version,
       themeMode: state.themeMode,
+      companion: state.companion,
       selectedUserId: state.selectedUserId,
       profiles: state.profiles,
       products: state.products,
@@ -448,6 +475,7 @@ export function AppStoreProvider({ children }: Readonly<{ children: React.ReactN
       value={{
         state,
         setThemeMode: (themeMode) => dispatch({ type: "setThemeMode", payload: themeMode }),
+        updateCompanion: (payload) => dispatch({ type: "updateCompanion", payload }),
         setSelectedUser: (userId) => dispatch({ type: "setSelectedUser", payload: userId }),
         addMealItem: (payload) => dispatch({ type: "addMealItem", payload }),
         updateMealItem: (payload) => dispatch({ type: "updateMealItem", payload }),

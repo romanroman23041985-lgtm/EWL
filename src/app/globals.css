@@ -202,6 +202,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
+@keyframes helper-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
 html[data-theme="beige"] .text-slate-900,
 html[data-theme="beige"] .text-slate-800,
 html[data-theme="beige"] .text-slate-700 {
