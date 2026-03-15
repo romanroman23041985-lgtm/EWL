@@ -28,6 +28,7 @@ export function ProductFormSheet({
   onDelete?: () => void;
 }) {
   const [draft, setDraft] = useState<ProductDraft>(() => toProductDraft(product));
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const validation = useMemo(() => validateProductDraft(draft), [draft]);
   const autoKcal = useMemo(() => getAutoKcalFromDraft(draft), [draft]);
   const inputModeLabel = draft.nutritionInputMode === "perUnit" ? "1 шт" : "100 г";
@@ -300,11 +301,38 @@ export function ProductFormSheet({
           </div>
         ) : null}
 
+        {confirmDelete ? (
+          <div className="theme-status-warning mt-4 rounded-[1.2rem] px-4 py-4 text-sm">
+            <div className="font-semibold">Точно удалить продукт?</div>
+            <div className="mt-1">
+              {usageCount > 0
+                ? "Он исчезнет из активного списка, но останется в старых записях."
+                : "Продукт будет удален из базы полностью."}
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(false)}
+                className="theme-elevated rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={onDelete}
+                className="theme-status-warning rounded-[1rem] px-4 py-3 text-sm font-semibold"
+              >
+                Да, удалить
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-5 flex items-center gap-3">
           {mode === "edit" && onDelete ? (
             <button
               type="button"
-              onClick={onDelete}
+              onClick={() => setConfirmDelete(true)}
               className="theme-status-warning rounded-[1rem] px-4 py-3 text-sm font-semibold"
             >
               Удалить

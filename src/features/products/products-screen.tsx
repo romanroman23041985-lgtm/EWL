@@ -108,20 +108,13 @@ export function ProductsScreen() {
                       ) : null}
                     </div>
 
-                    <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="mt-4">
                       <button
                         type="button"
                         onClick={() => setEditorState({ mode: "edit", product })}
-                        className="theme-elevated min-h-11 rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
+                        className="theme-elevated min-h-11 w-full rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
                       >
                         Править
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteProduct(product.id)}
-                        className="theme-status-warning min-h-11 rounded-[1rem] px-4 py-3 text-sm font-semibold"
-                      >
-                        Убрать
                       </button>
                     </div>
                   </div>
