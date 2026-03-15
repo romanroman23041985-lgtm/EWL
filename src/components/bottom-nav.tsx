@@ -74,12 +74,13 @@ export function BottomNav() {
             <li key={tab.href}>
               <Link
                 href={tab.href}
-                className={`flex min-h-14 flex-col items-center justify-center rounded-[1.35rem] px-2 py-2 text-[11px] font-semibold transition ${
+                className={`relative flex min-h-14 flex-col items-center justify-center rounded-[1.35rem] px-2 py-2 text-[11px] font-semibold transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-accent)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-shell)] ${
                   active
                     ? "theme-switcher-tab-active scale-[1.02] text-white shadow-[var(--shadow-accent)]"
                     : "text-slate-600"
                 }`}
               >
+                {active ? <span className="absolute inset-x-5 top-1.5 h-1 rounded-full bg-white/70" /> : null}
                 {tab.icon}
                 <span className="mt-1">{tab.label}</span>
               </Link>

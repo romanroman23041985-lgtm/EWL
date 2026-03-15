@@ -102,6 +102,11 @@ button {
   cursor: pointer;
 }
 
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0.7;
 }
@@ -228,6 +233,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   100% {
     opacity: 0;
     transform: translateY(22px) scale(0.94);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
