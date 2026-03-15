@@ -77,7 +77,7 @@ How it works:
 Expected public URL for this repository:
 
 ```text
-https://imthes.github.io/EWL-app/
+https://romanroman23041985-lgtm.github.io/EWL/
 ```
 
 Important:
