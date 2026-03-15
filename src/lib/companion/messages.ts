@@ -32,6 +32,21 @@ export function getFirstOpenDayMessage(dateKey: string): CompanionMessage {
   };
 }
 
+export function getOvereatingFirstOpenMessage(dateKey: string): CompanionMessage {
+  return {
+    key: `stuffed-open-${dateKey}`,
+    text: pickOne(
+      [
+        "Мяу-мяу... я чуток переелся, но всё равно очень рад.",
+        "Ой, я сегодня кругляш. Пойдём спокойненько, хи-хи.",
+        "Хи-хи, было вкусно. Сегодня можно просто мягонько продолжать.",
+      ],
+      dateKey,
+    ),
+    mood: "comfort",
+  };
+}
+
 export function getMealClosedMessage(mealType: BuiltInMealType, dateKey: string): CompanionMessage {
   return {
     key: `meal-${mealType}-${dateKey}`,
@@ -44,6 +59,21 @@ export function getMealClosedMessage(mealType: BuiltInMealType, dateKey: string)
       `${mealType}-${dateKey}`,
     ),
     mood: "celebration",
+  };
+}
+
+export function getOvereatingMealClosedMessage(mealType: BuiltInMealType, dateKey: string): CompanionMessage {
+  return {
+    key: `stuffed-meal-${mealType}-${dateKey}`,
+    text: pickOne(
+      [
+        `Мяу-мяу, ${mealNames[mealType]} закрыли. Я сытенький и довольный.`,
+        `Ой, ${mealNames[mealType]} уже на месте. Кругляшик рад-рад.`,
+        `Хи-хи, ${mealNames[mealType]} аккуратно добавился. Я прям пухленько сияю.`,
+      ],
+      `${mealType}-${dateKey}`,
+    ),
+    mood: "comfort",
   };
 }
 
@@ -100,6 +130,27 @@ export function getSlightlyOverMessage(dateKey: string): CompanionMessage {
         "Ой, чуть вышло сверху. Можно просто спокойно продолжать.",
       ],
       dateKey,
+    ),
+    mood: "comfort",
+  };
+}
+
+export function getOvereatingStatusMessage(dateKey: string, isOverToday: boolean): CompanionMessage {
+  return {
+    key: isOverToday ? `stuffed-over-${dateKey}` : `stuffed-calm-${dateKey}`,
+    text: pickOne(
+      isOverToday
+        ? [
+            "Мяу-мяу... я чуток переелся.",
+            "Ой, я сегодня кругляш. Ничего, бывает.",
+            "Хи-хи, было вкусно. Один спокойный денёк, и снова будем аккуратненькие.",
+          ]
+        : [
+            "Мяу-мяу, сегодня можно спокойно и ровненько.",
+            "Ой, кругляшик уже притих. Один аккуратный денёк очень помогает.",
+            "Хи-хи, я всё ещё пухленький, но мы идём мягонько и спокойно.",
+          ],
+      `${dateKey}-${isOverToday ? "over" : "calm"}`,
     ),
     mood: "comfort",
   };

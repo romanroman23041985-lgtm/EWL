@@ -121,6 +121,41 @@ export function getComfortCorridorStreak(state: PersistedAppState, user: UserPro
   return countConsecutiveTail(dates, () => true);
 }
 
+export function isOverTargetDay(state: PersistedAppState, user: UserProfile, dateKey: string) {
+  const entry = getDayEntry(state, user.id, dateKey);
+  if (!entry) {
+    return false;
+  }
+
+  const items = state.mealItems.filter((item) => item.dayEntryId === entry.id);
+  if (!items.length) {
+    return false;
+  }
+
+  const target = calculateTargets(user).kcal;
+  const actual = sumNutrition(
+    items.flatMap((item) => {
+      const product = state.products.find((candidate) => candidate.id === item.productId);
+      if (!product) {
+        return [];
+      }
+
+      return [calculateProductNutrition(product, item.grams)];
+    }),
+  ).kcal;
+
+  return actual > target;
+}
+
+export function getOverTargetDates(state: PersistedAppState, user: UserProfile) {
+  return getLoggedDateKeys(state, user.id).filter((dateKey) => isOverTargetDay(state, user, dateKey));
+}
+
+export function getOverTargetStreak(state: PersistedAppState, user: UserProfile) {
+  const dates = getOverTargetDates(state, user);
+  return countConsecutiveTail(dates, () => true);
+}
+
 export function getDaysSinceLastLog(state: PersistedAppState, userId: string) {
   const latest = getLatestLoggedDate(state, userId);
   if (!latest) {

@@ -82,6 +82,7 @@ function createEmptyState(): HydratedState {
     themeMode: "rose",
     companion: {
       unlockedAchievementIds: [],
+      mascotMode: "default",
       lastMessageKey: null,
       lastMessageAt: null,
       lastMessageText: null,
@@ -107,6 +108,7 @@ function normalizeState(payload: PersistedAppState): PersistedAppState {
     themeMode: payload.themeMode === "beige" ? "beige" : "rose",
     companion: {
       unlockedAchievementIds: payload.companion?.unlockedAchievementIds ?? [],
+      mascotMode: payload.companion?.mascotMode === "overeating" ? "overeating" : "default",
       lastMessageKey: payload.companion?.lastMessageKey ?? null,
       lastMessageAt: payload.companion?.lastMessageAt ?? null,
       lastMessageText: payload.companion?.lastMessageText ?? null,

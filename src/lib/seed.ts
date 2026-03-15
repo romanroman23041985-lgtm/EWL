@@ -8,6 +8,7 @@ export function buildSeedState(): PersistedAppState {
     themeMode: "rose",
     companion: {
       unlockedAchievementIds: [],
+      mascotMode: "default",
       lastMessageKey: null,
       lastMessageAt: null,
       lastMessageText: null,

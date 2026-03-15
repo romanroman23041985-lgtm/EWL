@@ -44,6 +44,7 @@ function migrateState(state: PersistedAppState): PersistedAppState {
     themeMode: state.themeMode === "beige" ? "beige" : "rose",
     companion: {
       unlockedAchievementIds: state.companion?.unlockedAchievementIds ?? [],
+      mascotMode: state.companion?.mascotMode === "overeating" ? "overeating" : "default",
       lastMessageKey: state.companion?.lastMessageKey ?? null,
       lastMessageAt: state.companion?.lastMessageAt ?? null,
       lastMessageText: state.companion?.lastMessageText ?? null,

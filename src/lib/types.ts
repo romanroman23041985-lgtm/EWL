@@ -6,6 +6,7 @@ export type BuiltInMealType = Exclude<MealType, "custom">;
 
 export type QuantityMode = "grams" | "piece";
 export type ThemeMode = "rose" | "beige";
+export type MascotMode = "default" | "overeating";
 
 export type FormulaMode = "lose" | "maintain" | "gain" | "custom";
 
@@ -75,6 +76,7 @@ export interface NutritionTotals {
 
 export interface CompanionState {
   unlockedAchievementIds: string[];
+  mascotMode?: MascotMode;
   lastMessageKey?: string | null;
   lastMessageAt?: string | null;
   lastMessageText?: string | null;
