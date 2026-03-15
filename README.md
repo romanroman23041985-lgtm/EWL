@@ -45,10 +45,11 @@ Open `http://localhost:3000`.
 ```bash
 npm run lint
 npm run build
-npm run start
 ```
 
 No environment variables are required for the current version.
+
+For GitHub Pages, `npm run build` creates a static export in `out/`.
 
 ## Deploy On Vercel
 
@@ -61,6 +62,29 @@ Steps:
 3. Deploy.
 
 There are no required server secrets or custom runtime settings in the current version.
+
+## Deploy On GitHub Pages
+
+The repository is prepared for GitHub Pages deployment through GitHub Actions.
+
+How it works:
+
+1. Push changes to the `master` branch
+2. GitHub Actions runs the static export build
+3. The generated `out/` folder is deployed to GitHub Pages
+4. The site updates automatically after each successful push
+
+Expected public URL for this repository:
+
+```text
+https://imthes.github.io/EWL-app/
+```
+
+Important:
+
+- GitHub Pages must be enabled in the repository settings
+- In `Settings -> Pages`, the source should be `GitHub Actions`
+- Because this app uses local browser storage, each device keeps its own local data
 
 ## Project Structure
 
