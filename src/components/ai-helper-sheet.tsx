@@ -1,12 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  askAiHelper,
-  inferProductRequest,
-  type AiHelperMode,
-  type ProductAiSuggestion,
-} from "@/lib/ai/deepseek";
+import { useEffect, useState } from "react";
+import { askAiHelper, type ProductAiSuggestion } from "@/lib/ai/deepseek";
 import { productSuggestionToDraft } from "@/lib/ai/product-draft";
 import { loadLocalDeepSeekApiKey, saveLocalDeepSeekApiKey } from "@/lib/ai/storage";
 import type { ProductDraft } from "@/lib/types";
@@ -25,9 +20,7 @@ export function AiHelperSheet({
   onClose: () => void;
   onCreateProduct: (draft: ProductDraft) => void;
 }) {
-  const [mode, setMode] = useState<AiHelperMode>("product");
   const [apiKey, setApiKey] = useState("");
-  const [appQuestion, setAppQuestion] = useState("");
   const [productName, setProductName] = useState("");
   const [productContext, setProductContext] = useState("");
   const [answer, setAnswer] = useState("");
@@ -44,29 +37,22 @@ export function AiHelperSheet({
     setApiKey(loadLocalDeepSeekApiKey());
   }, [open]);
 
-  const canAskApp = Boolean(apiKey.trim() && appQuestion.trim());
-  const canAskProduct = Boolean(apiKey.trim() && productName.trim());
-  const helperHint = useMemo(
-    () =>
-      mode === "app"
-        ? "Можно спросить про приложение. А если просто написать продукт вроде «миндаль», я сам попробую распознать его и собрать нутриенты."
-        : "Напиши название продукта и, если хочешь, уточни бренд, порцию или что это за штука.",
-    [mode],
-  );
-
   if (!open) {
     return null;
   }
+
+  const canAskProduct = Boolean(apiKey.trim() && productName.trim());
 
   return (
     <div className="theme-overlay fixed inset-0 z-[80] flex items-end p-3">
       <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[2rem] bg-[#fffdfa] p-4 shadow-[0_24px_70px_rgba(35,43,53,0.24)]">
         <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-slate-200" />
+
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">AI-помощник творожка</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Творожок добавит продукт</h3>
             <p className="mt-1 text-sm leading-6 text-slate-500">
-              Помогает только по приложению и по заполнению нутриентов продукта.
+              Напиши продукт, а я попробую найти нутриенты через AI и соберу карточку, которую можно сразу сохранить.
             </p>
           </div>
           <button
@@ -114,72 +100,37 @@ export function AiHelperSheet({
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("app");
-              setError("");
-            }}
-            className={`rounded-[1rem] px-4 py-3 text-sm font-semibold ${
-              mode === "app" ? "theme-switcher-tab-active text-white" : "bg-slate-100 text-slate-700"
-            }`}
-          >
-            По приложению
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("product");
-              setError("");
-            }}
-            className={`rounded-[1rem] px-4 py-3 text-sm font-semibold ${
-              mode === "product" ? "theme-switcher-tab-active text-white" : "bg-slate-100 text-slate-700"
-            }`}
-          >
-            По продукту
-          </button>
+        <div className="mt-4 rounded-[1.25rem] bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          Сценарий простой: написал продукт, получил КБЖУ и нутриенты, нажал кнопку и создал карточку продукта.
         </div>
 
-        <div className="mt-4 rounded-[1.25rem] bg-slate-50 px-4 py-3 text-sm text-slate-600">{helperHint}</div>
-
-        {mode === "app" ? (
-          <div className="mt-4">
-            <textarea
-              value={appQuestion}
-              onChange={(event) => setAppQuestion(event.target.value)}
-              placeholder={`Например: как добавить свой продукт на экране ${currentPath}? Или просто: миндаль`}
-              className="theme-input min-h-28 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
+        <div className="mt-4 grid gap-4">
+          <label className="text-sm font-medium text-slate-600">
+            Название продукта
+            <input
+              className={inputClass}
+              value={productName}
+              onChange={(event) => setProductName(event.target.value)}
+              placeholder="Например, миндаль, чизбургер, чокопай"
             />
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-4">
-            <label className="text-sm font-medium text-slate-600">
-              Название продукта
-              <input
-                className={inputClass}
-                value={productName}
-                onChange={(event) => setProductName(event.target.value)}
-                placeholder="Например, чизбургер или батончик"
-              />
-            </label>
-            <label className="text-sm font-medium text-slate-600">
-              Уточнение
-              <textarea
-                value={productContext}
-                onChange={(event) => setProductContext(event.target.value)}
-                placeholder="Бренд, вес штуки, вкус, сколько граммов, что это за продукт"
-                className="theme-input mt-2 min-h-24 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
-              />
-            </label>
-          </div>
-        )}
+          </label>
+
+          <label className="text-sm font-medium text-slate-600">
+            Уточнение
+            <textarea
+              value={productContext}
+              onChange={(event) => setProductContext(event.target.value)}
+              placeholder="Бренд, вес штуки, вкус, упаковка или другая полезная деталь"
+              className="theme-input mt-2 min-h-24 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
+            />
+          </label>
+        </div>
 
         {error ? <div className="theme-status-warning mt-4 rounded-[1.1rem] px-4 py-3 text-sm">{error}</div> : null}
 
         {answer ? (
           <div className="theme-elevated mt-4 rounded-[1.25rem] px-4 py-3 text-sm leading-6 text-slate-700">
-            <div className="font-semibold text-slate-900">Ответ</div>
+            <div className="font-semibold text-slate-900">Что нашёл творожок</div>
             <div className="mt-2 whitespace-pre-wrap">{answer}</div>
           </div>
         ) : null}
@@ -202,14 +153,14 @@ export function AiHelperSheet({
             <div className="mt-3 text-xs text-slate-600">
               {productSuggestion.unitMode === "piece" && productSuggestion.gramsPerUnit
                 ? `1 ${productSuggestion.unitLabel} ≈ ${productSuggestion.gramsPerUnit} г`
-                : "Значения сохраню как продукт по граммам."}
+                : "Значения будут сохранены как продукт на 100 г."}
             </div>
             <button
               type="button"
               onClick={() => onCreateProduct(productSuggestionToDraft(productSuggestion))}
               className="theme-accent-button mt-4 rounded-[1rem] px-5 py-3 text-sm font-semibold"
             >
-              Создать продукт из ответа AI
+              Создать карточку продукта
             </button>
           </div>
         ) : null}
@@ -224,31 +175,18 @@ export function AiHelperSheet({
               setProductSuggestion(null);
 
               try {
-                const inferred = mode === "app" ? inferProductRequest(appQuestion) : null;
-                const effectiveMode =
-                  mode === "app" && inferred?.productName.trim() ? "product" : mode;
-
                 const result = await askAiHelper({
                   apiKey,
-                  mode: effectiveMode,
+                  mode: "product",
                   currentPath,
-                  question:
-                    effectiveMode === "app"
-                      ? appQuestion
-                      : `Помоги заполнить нутриенты продукта для приложения.`,
-                  productName: effectiveMode === "product" ? (mode === "product" ? productName : inferred?.productName) : undefined,
-                  productContext: effectiveMode === "product" ? (mode === "product" ? productContext : inferred?.productContext) : undefined,
+                  question: "Подбери нутриенты для создания продукта в приложении.",
+                  productName,
+                  productContext,
                 });
 
                 if (result.mode === "product") {
-                  setAnswer(
-                    mode === "app"
-                      ? `Понял это как запрос по продукту. ${result.answer}`
-                      : result.answer,
-                  );
-                  setProductSuggestion(result.product);
-                } else {
                   setAnswer(result.answer);
+                  setProductSuggestion(result.product);
                 }
               } catch (requestError) {
                 setError(requestError instanceof Error ? requestError.message : "Не удалось спросить AI.");
@@ -256,10 +194,10 @@ export function AiHelperSheet({
                 setSubmitting(false);
               }
             }}
-            disabled={submitting || !(mode === "app" ? canAskApp : canAskProduct)}
+            disabled={submitting || !canAskProduct}
             className="theme-accent-button rounded-[1rem] px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
           >
-            {submitting ? "Спрашиваю..." : mode === "app" ? "Спросить AI" : "Подтянуть нутриенты"}
+            {submitting ? "Ищу нутриенты..." : "Найти и собрать продукт"}
           </button>
         </div>
       </div>

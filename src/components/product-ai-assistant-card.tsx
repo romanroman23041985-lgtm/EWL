@@ -36,10 +36,10 @@ export function ProductAiAssistantCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">AI-помощник</p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-900">Творожок поможет собрать продукт</h2>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900">Творожок поможет добавить продукт</h2>
           <p className="mt-2 text-sm leading-6 text-slate-700">
-            Напиши продукт, и я подтяну КБЖУ и нутриенты. Потом открою обычный редактор, где можно все
-            перепроверить и сохранить.
+            Напиши продукт, и я подтяну КБЖУ и нутриенты. Потом сразу открою обычную карточку продукта, где можно
+            проверить и сохранить.
           </p>
         </div>
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.5rem] bg-white/80 text-3xl shadow-[0_12px_28px_rgba(113,82,57,0.12)]">
@@ -97,7 +97,7 @@ export function ProductAiAssistantCard({
           <textarea
             value={productContext}
             onChange={(event) => setProductContext(event.target.value)}
-            placeholder="Бренд, вес штуки, вкус, упаковка, любая полезная деталь"
+            placeholder="Бренд, вес штуки, вкус, упаковка или любая полезная деталь"
             className="theme-input mt-2 min-h-24 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
           />
         </label>
@@ -173,7 +173,7 @@ export function ProductAiAssistantCard({
             onClick={() => onUseDraft(productSuggestionToDraft(productSuggestion))}
             className="theme-accent-button mt-4 w-full rounded-[1rem] px-5 py-3 text-sm font-semibold"
           >
-            Открыть в редакторе продукта
+            Открыть карточку продукта
           </button>
         </div>
       ) : null}

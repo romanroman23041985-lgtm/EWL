@@ -68,7 +68,8 @@ export function ProductsScreen() {
         }}
       />
 
-      <section className="app-card rounded-[2rem] p-4">
+      <section className="theme-important rounded-[2rem] p-4 shadow-[0_18px_40px_rgba(113,82,57,0.08)]">
+        <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Поиск по базе</div>
         <input
           type="search"
           value={query}
@@ -77,7 +78,7 @@ export function ProductsScreen() {
             setVisibleCount(PAGE_SIZE);
           }}
           placeholder="Найти курочку, пиццу, рис, чокопай..."
-          className="theme-input h-12 w-full rounded-[1rem] border border-[var(--color-outline)] px-4 outline-none"
+          className="theme-input h-12 w-full rounded-[1rem] border border-[rgba(137,104,80,0.26)] bg-white/95 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65),0_10px_20px_rgba(113,82,57,0.06)] outline-none"
         />
       </section>
 
