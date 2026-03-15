@@ -30,11 +30,13 @@ const tabs = [
     label: "Продукты",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
-        <path d="M7 5h10" />
-        <path d="M9 5v6" />
-        <path d="M15 5v6" />
-        <path d="M6 11h12" />
-        <path d="M8 19c0-3 1.3-5 4-5s4 2 4 5" />
+        <path d="M12 7c1.4-1.8 3.1-3 5.4-3" strokeLinecap="round" />
+        <path d="M12.2 6.4c-.9-1.8-2.4-2.9-4.7-3.2" strokeLinecap="round" />
+        <path
+          d="M12 8c-4.4 0-7 3-7 6.7 0 3.1 2.2 5.8 5.5 5.8 1 0 1.7-.3 2.5-.8.8.5 1.5.8 2.5.8 3.3 0 5.5-2.7 5.5-5.8C21 11 18.4 8 14 8Z"
+          strokeLinejoin="round"
+        />
+        <path d="M12 8c-.8 1.1-1.2 2.4-1.2 3.8" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -52,14 +54,21 @@ const tabs = [
   },
 ];
 
+function normalizePathname(pathname: string) {
+  const withoutBase = pathname.replace(/^\/EWL(?=\/|$)/, "");
+  const normalized = withoutBase || "/";
+  return normalized.endsWith("/") && normalized !== "/" ? normalized.slice(0, -1) : normalized;
+}
+
 export function BottomNav() {
   const pathname = usePathname();
+  const currentPath = normalizePathname(pathname);
 
   return (
     <nav className="theme-nav fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 mx-auto w-[calc(100%-2rem)] max-w-md rounded-[2rem] p-2 backdrop-blur">
       <ul className="grid grid-cols-4 gap-2">
         {tabs.map((tab) => {
-          const active = pathname === tab.href;
+          const active = currentPath === tab.href || currentPath.startsWith(`${tab.href}/`);
 
           return (
             <li key={tab.href}>
@@ -67,7 +76,7 @@ export function BottomNav() {
                 href={tab.href}
                 className={`flex min-h-14 flex-col items-center justify-center rounded-[1.35rem] px-2 py-2 text-[11px] font-semibold transition ${
                   active
-                    ? "theme-switcher-tab-active text-white"
+                    ? "theme-switcher-tab-active scale-[1.02] text-white shadow-[var(--shadow-accent)]"
                     : "text-slate-600"
                 }`}
               >
