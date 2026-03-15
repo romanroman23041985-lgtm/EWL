@@ -23,53 +23,175 @@ import { getDaySummary, getMealSections, getSelectedUser } from "@/lib/selectors
 import { useAppStore } from "@/store/app-store";
 import type { MascotMode } from "@/lib/types";
 
-function DefaultCottageCheeseFace({ mood = "normal" }: { mood?: "normal" | "celebration" | "comfort" }) {
-  const blushClass = mood === "comfort" ? "bg-[#f2c7b6]" : "bg-[#f7cdb8]";
+function KawaiiCottageCheeseArt({
+  variant,
+  mood,
+}: {
+  variant: MascotMode;
+  mood?: "normal" | "celebration" | "comfort";
+}) {
+  const isOvereating = variant === "overeating";
+  const glowColor = isOvereating ? "rgba(248, 213, 156, 0.54)" : "rgba(252, 224, 172, 0.5)";
+  const cheekColor = mood === "comfort" ? "#f5c8bc" : "#f8d2c4";
+  const eyeFill = "#6f4b37";
 
   return (
-    <div className="relative h-[112px] w-[112px]">
-      <div className="absolute inset-x-3 bottom-0 h-14 rounded-[999px_999px_22px_22px] border border-[#dbc3aa] bg-[linear-gradient(180deg,#f8efe3,#e8d4bc)] shadow-[0_12px_30px_rgba(95,77,62,0.18)]" />
-      <div className="absolute inset-x-5 bottom-8 h-16 rounded-[40px] bg-[linear-gradient(180deg,#fffaf2,#f5e8d4)]">
-        <div className="absolute inset-x-1 top-2 bottom-1 rounded-[36px] bg-[radial-gradient(circle_at_18%_20%,#fffefb_0,#fff7ec_36%,transparent_37%),radial-gradient(circle_at_52%_46%,#fff9ef_0,#fff0df_35%,transparent_36%),radial-gradient(circle_at_76%_30%,#fffdf8_0,#f8ebda_30%,transparent_31%),radial-gradient(circle_at_62%_72%,#fcf5e9_0,#f3e2cc_34%,transparent_35%),radial-gradient(circle_at_28%_70%,#fffdf8_0,#f2e4d0_32%,transparent_33%)]" />
-      </div>
-      <div className="absolute left-9 top-[54px] h-5 w-5 rounded-full bg-[#6d4f3a]" />
-      <div className="absolute right-9 top-[54px] h-5 w-5 rounded-full bg-[#6d4f3a]" />
-      <div className="absolute left-[42px] top-[58px] h-2.5 w-2.5 rounded-full bg-white" />
-      <div className="absolute right-[42px] top-[58px] h-2.5 w-2.5 rounded-full bg-white" />
-      <div className={`absolute left-6 top-[72px] h-4 w-5 rounded-full opacity-75 ${blushClass}`} />
-      <div className={`absolute right-6 top-[72px] h-4 w-5 rounded-full opacity-75 ${blushClass}`} />
-      <div className="absolute left-1/2 top-[74px] h-5 w-7 -translate-x-1/2 rounded-[0_0_18px_18px] border-x border-b border-[#734e39] bg-[#ffb78d]" />
-      <div className="absolute left-[26px] bottom-[22px] h-3 w-5 rounded-full border border-[#c9a98e] bg-[#fff7ea]" />
-      <div className="absolute right-[18px] bottom-[22px] h-10 w-3 origin-bottom rotate-[18deg] rounded-full bg-[#d1b79b]" />
-      <div className="absolute right-[9px] bottom-[48px] h-7 w-5 rounded-full border border-[#ccb093] bg-[linear-gradient(180deg,#fffefc,#efe4d3)] shadow-sm" />
-      <div className="absolute left-[42px] top-0 h-10 w-7 rounded-[18px_18px_24px_24px] bg-[linear-gradient(180deg,#fffef9,#f3dec1)] shadow-[0_6px_18px_rgba(171,134,88,0.18)]" />
+    <div className="relative h-[118px] w-[118px] drop-shadow-[0_16px_24px_rgba(120,92,66,0.18)]">
+      <svg viewBox="0 0 160 160" className="h-full w-full overflow-visible" aria-hidden="true">
+        <defs>
+          <radialGradient id="helperGlow" cx="50%" cy="45%" r="55%">
+            <stop offset="0%" stopColor={glowColor} />
+            <stop offset="100%" stopColor="rgba(248, 220, 180, 0)" />
+          </radialGradient>
+          <linearGradient id="bowlFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#fff9f0" />
+            <stop offset="100%" stopColor="#ecd6b9" />
+          </linearGradient>
+          <linearGradient id="bowlLip" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#fffdf7" />
+            <stop offset="100%" stopColor="#f6dfc4" />
+          </linearGradient>
+          <linearGradient id="curdFill" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#fffdf8" />
+            <stop offset="100%" stopColor="#f7ead7" />
+          </linearGradient>
+          <linearGradient id="creamTop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fffefb" />
+            <stop offset="100%" stopColor="#f2dec2" />
+          </linearGradient>
+          <linearGradient id="spoonMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fffdf8" />
+            <stop offset="100%" stopColor="#cdb79a" />
+          </linearGradient>
+        </defs>
+
+        <ellipse cx="80" cy="72" rx="54" ry="54" fill="url(#helperGlow)" />
+
+        <ellipse cx="80" cy="126" rx="12" ry="6.5" fill="#ceb08e" />
+        <ellipse cx="58" cy="136" rx="5" ry="3" fill="#c49d72" />
+        <ellipse cx="102" cy="136" rx="5" ry="3" fill="#c49d72" />
+
+        <path
+          d="M30 92c0-7 9-12 19-12h62c10 0 19 5 19 12l-4 22c-2 10-10 17-21 17H55c-11 0-19-7-21-17z"
+          fill="url(#bowlFill)"
+          stroke="#c99963"
+          strokeWidth="2.2"
+        />
+        <ellipse cx="80" cy="93" rx="51" ry="13.5" fill="url(#bowlLip)" stroke="#d4a16f" strokeWidth="2.2" />
+        <ellipse cx="80" cy="93" rx="43" ry="9.5" fill="rgba(255,252,247,0.68)" />
+
+        <path
+          d="M39 82c0-18 19-33 41-33s41 15 41 33v5H39z"
+          fill="url(#curdFill)"
+          stroke="#e6cfb1"
+          strokeWidth="1.6"
+        />
+
+        <g fill="#fffaf2" stroke="#efdcc3" strokeWidth="1.5">
+          <circle cx="42" cy="83" r="9" />
+          <circle cx="52" cy="73" r="9" />
+          <circle cx="63" cy="68" r="10" />
+          <circle cx="77" cy="66" r="11" />
+          <circle cx="92" cy="68" r="10" />
+          <circle cx="106" cy="72" r="9" />
+          <circle cx="117" cy="81" r="9" />
+          <circle cx="48" cy="93" r="8" />
+          <circle cx="61" cy="89" r="9" />
+          <circle cx="74" cy="88" r="9" />
+          <circle cx="87" cy="88" r="9" />
+          <circle cx="100" cy="89" r="9" />
+          <circle cx="112" cy="94" r="8" />
+          <circle cx="53" cy="102" r="7.5" />
+          <circle cx="68" cy="101" r="8" />
+          <circle cx="80" cy="102" r="7.5" />
+          <circle cx="93" cy="101" r="8" />
+          <circle cx="107" cy="102" r="7.5" />
+        </g>
+
+        <path
+          d="M63 42c-1-10 10-17 20-17 12 0 23 10 23 20 0 3 4 5 7 5 8 0 13 6 13 13 0 9-8 15-18 15H73c-14 0-22-7-22-17 0-7 5-12 12-14z"
+          fill="url(#creamTop)"
+          stroke="#ddb68c"
+          strokeWidth="2"
+        />
+        <path
+          d="M66 43c10-10 23-13 31-7 5 4 6 10 3 14"
+          fill="none"
+          stroke="#fffdf9"
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+        <path
+          d="M72 30c8-4 17-2 22 4 4 5 4 10 1 14"
+          fill="none"
+          stroke="#fff5e8"
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+
+        {isOvereating ? (
+          <>
+            <ellipse cx="55" cy="94" rx="14" ry="12" fill="#fff7ed" opacity="0.95" />
+            <ellipse cx="105" cy="94" rx="14" ry="12" fill="#fff7ed" opacity="0.95" />
+            <path d="M53 83c4 5 10 5 14 0" fill="none" stroke={eyeFill} strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M93 83c4 5 10 5 14 0" fill="none" stroke={eyeFill} strokeWidth="3.4" strokeLinecap="round" />
+            <ellipse cx="52" cy="95" rx="9.5" ry="6.8" fill={cheekColor} opacity="0.9" />
+            <ellipse cx="108" cy="95" rx="9.5" ry="6.8" fill={cheekColor} opacity="0.9" />
+            <path
+              d="M69 99c4 4 18 4 22 0"
+              fill="none"
+              stroke="#6f4b37"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+            />
+            <path
+              d="M69 99c2 8 20 8 22 0"
+              fill="#f6a987"
+              stroke="#7c513a"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+            <circle cx="82" cy="101" r="4.5" fill="#fff6ed" opacity="0.9" />
+          </>
+        ) : (
+          <>
+            <path d="M49 74c3-3 8-3 11 0" fill="none" stroke="#7b573f" strokeWidth="2" strokeLinecap="round" />
+            <path d="M100 74c3-3 8-3 11 0" fill="none" stroke="#7b573f" strokeWidth="2" strokeLinecap="round" />
+            <g>
+              <ellipse cx="57" cy="90" rx="10.5" ry="12" fill={eyeFill} />
+              <ellipse cx="103" cy="90" rx="10.5" ry="12" fill={eyeFill} />
+              <ellipse cx="60" cy="87" rx="4.5" ry="5.4" fill="#fffefc" />
+              <ellipse cx="106" cy="87" rx="4.5" ry="5.4" fill="#fffefc" />
+              <ellipse cx="54" cy="94" rx="2.2" ry="2.5" fill="#f6d4aa" opacity="0.9" />
+              <ellipse cx="100" cy="94" rx="2.2" ry="2.5" fill="#f6d4aa" opacity="0.9" />
+            </g>
+            <ellipse cx="44" cy="102" rx="8.5" ry="5.4" fill={cheekColor} opacity="0.82" />
+            <ellipse cx="116" cy="102" rx="8.5" ry="5.4" fill={cheekColor} opacity="0.82" />
+            <path
+              d="M70 95c3 4 17 4 20 0v6c0 7-20 7-20 0z"
+              fill="#f5a07f"
+              stroke="#7b5239"
+              strokeWidth="1.8"
+              strokeLinejoin="round"
+            />
+          </>
+        )}
+
+        <ellipse cx="43" cy="106" rx="9.5" ry="6.5" fill="#fff8ef" stroke="#d4ad85" strokeWidth="1.6" />
+        <path d="M113 104l11-26" fill="none" stroke="#bb8d5c" strokeWidth="3.2" strokeLinecap="round" />
+        <ellipse cx="128" cy="73" rx="8.5" ry="12" fill="url(#spoonMetal)" stroke="#b88957" strokeWidth="2" />
+        <ellipse cx="129.5" cy="68.5" rx="2.7" ry="3.4" fill="#fffefb" opacity="0.9" />
+      </svg>
     </div>
   );
 }
 
-function OvereatingCottageCheeseFace({ mood = "comfort" }: { mood?: "normal" | "celebration" | "comfort" }) {
-  const blushClass = mood === "celebration" ? "bg-[#f2bfab]" : "bg-[#efc4ae]";
+function DefaultCottageCheeseFace({ mood = "normal" }: { mood?: "normal" | "celebration" | "comfort" }) {
+  return <KawaiiCottageCheeseArt variant="default" mood={mood} />;
+}
 
-  return (
-    <div className="relative h-[112px] w-[112px]">
-      <div className="absolute inset-x-3 bottom-0 h-14 rounded-[999px_999px_22px_22px] border border-[#dbc3aa] bg-[linear-gradient(180deg,#f8efe3,#e3ccb0)] shadow-[0_12px_30px_rgba(95,77,62,0.18)]" />
-      <div className="absolute inset-x-2 bottom-7 h-[72px] rounded-[44px] bg-[linear-gradient(180deg,#fffaf2,#f5e3cd)]">
-        <div className="absolute inset-1 rounded-[40px] bg-[radial-gradient(circle_at_20%_20%,#fffefc_0,#fff5e8_34%,transparent_35%),radial-gradient(circle_at_46%_42%,#fffaf2_0,#f9ead7_34%,transparent_35%),radial-gradient(circle_at_78%_26%,#fffdf7_0,#f6e6d0_31%,transparent_32%),radial-gradient(circle_at_30%_72%,#fffaf2_0,#f0dcc3_32%,transparent_33%),radial-gradient(circle_at_72%_74%,#fffaf1_0,#efd7bb_31%,transparent_32%)]" />
-      </div>
-      <div className="absolute left-4 right-4 top-[39px] h-[46px] rounded-[999px] bg-[radial-gradient(circle_at_22%_45%,#fff9ef_0,#f5e6cf_34%,transparent_35%),radial-gradient(circle_at_78%_45%,#fff9ef_0,#f5e6cf_34%,transparent_35%),linear-gradient(180deg,#fff8ee,#f6e4ce)]" />
-      <div className="absolute left-[17px] top-[56px] h-9 w-9 rounded-full bg-[#fff5ea] shadow-[inset_0_1px_4px_rgba(182,140,92,0.14)]" />
-      <div className="absolute right-[17px] top-[56px] h-9 w-9 rounded-full bg-[#fff5ea] shadow-[inset_0_1px_4px_rgba(182,140,92,0.14)]" />
-      <div className={`absolute left-5 top-[67px] h-5 w-7 rounded-full opacity-80 ${blushClass}`} />
-      <div className={`absolute right-5 top-[67px] h-5 w-7 rounded-full opacity-80 ${blushClass}`} />
-      <div className="absolute left-[31px] top-[55px] h-3 w-5 rounded-b-full border-b-[3px] border-[#714c38]" />
-      <div className="absolute right-[31px] top-[55px] h-3 w-5 rounded-b-full border-b-[3px] border-[#714c38]" />
-      <div className="absolute left-1/2 top-[66px] h-6 w-8 -translate-x-1/2 rounded-[0_0_20px_20px] border-x border-b border-[#734e39] bg-[#ffb088]" />
-      <div className="absolute left-1/2 top-[72px] h-5 w-5 -translate-x-1/2 rounded-full bg-[#fff8ee]" />
-      <div className="absolute left-[18px] bottom-[22px] h-4 w-6 rounded-full border border-[#c9a98e] bg-[#fff7ea]" />
-      <div className="absolute right-[18px] bottom-[20px] h-4 w-6 rounded-full border border-[#c9a98e] bg-[#fff7ea]" />
-      <div className="absolute left-[41px] top-0 h-10 w-8 rounded-[18px_18px_24px_24px] bg-[linear-gradient(180deg,#fffef9,#f1dcc0)] shadow-[0_6px_18px_rgba(171,134,88,0.18)]" />
-    </div>
-  );
+function OvereatingCottageCheeseFace({ mood = "comfort" }: { mood?: "normal" | "celebration" | "comfort" }) {
+  return <KawaiiCottageCheeseArt variant="overeating" mood={mood} />;
 }
 
 function CottageCheeseFace({
