@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { askAiHelper, type ProductAiSuggestion } from "@/lib/ai/deepseek";
 import { productSuggestionToDraft } from "@/lib/ai/product-draft";
 import { loadLocalDeepSeekApiKey, saveLocalDeepSeekApiKey } from "@/lib/ai/storage";
@@ -25,9 +25,9 @@ export function AiHelperSheet({
   const [productContext, setProductContext] = useState("");
   const [answer, setAnswer] = useState("");
   const [productSuggestion, setProductSuggestion] = useState<ProductAiSuggestion | null>(null);
-  const [savingKey, setSavingKey] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const hydratedKeyRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
@@ -35,7 +35,16 @@ export function AiHelperSheet({
     }
 
     setApiKey(loadLocalDeepSeekApiKey());
+    hydratedKeyRef.current = true;
   }, [open]);
+
+  useEffect(() => {
+    if (!hydratedKeyRef.current) {
+      return;
+    }
+
+    saveLocalDeepSeekApiKey(apiKey);
+  }, [apiKey]);
 
   if (!open) {
     return null;
@@ -75,23 +84,12 @@ export function AiHelperSheet({
             onChange={(event) => setApiKey(event.target.value)}
             placeholder="Вставьте свой DeepSeek API key"
           />
-          <div className="mt-3 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setSavingKey(true);
-                saveLocalDeepSeekApiKey(apiKey);
-                window.setTimeout(() => setSavingKey(false), 800);
-              }}
-              className="theme-accent-button rounded-[1rem] px-4 py-3 text-sm font-semibold"
-            >
-              {savingKey ? "Сохранено" : "Сохранить ключ"}
-            </button>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div className="text-xs text-slate-500">Ключ сохраняется автоматически в этом браузере.</div>
             <button
               type="button"
               onClick={() => {
                 setApiKey("");
-                saveLocalDeepSeekApiKey("");
               }}
               className="theme-elevated rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
             >

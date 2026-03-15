@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { askAiHelper, type ProductAiSuggestion } from "@/lib/ai/deepseek";
 import { productSuggestionToDraft } from "@/lib/ai/product-draft";
 import { loadLocalDeepSeekApiKey, saveLocalDeepSeekApiKey } from "@/lib/ai/storage";
@@ -20,31 +20,35 @@ export function ProductAiAssistantCard({
   const [productName, setProductName] = useState("");
   const [productContext, setProductContext] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [savingKey, setSavingKey] = useState(false);
   const [error, setError] = useState("");
   const [answer, setAnswer] = useState("");
   const [productSuggestion, setProductSuggestion] = useState<ProductAiSuggestion | null>(null);
+  const hydratedKeyRef = useRef(false);
 
   useEffect(() => {
     setApiKey(loadLocalDeepSeekApiKey());
+    hydratedKeyRef.current = true;
   }, []);
+
+  useEffect(() => {
+    if (!hydratedKeyRef.current) {
+      return;
+    }
+
+    saveLocalDeepSeekApiKey(apiKey);
+  }, [apiKey]);
 
   const canAsk = Boolean(apiKey.trim() && productName.trim());
 
   return (
     <section className="theme-important rounded-[2rem] px-5 py-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">AI-помощник</p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-900">Творожок поможет добавить продукт</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Напиши продукт, и я подтяну КБЖУ и нутриенты. Потом сразу открою обычную карточку продукта, где можно
-            проверить и сохранить.
-          </p>
-        </div>
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.5rem] bg-white/80 text-3xl shadow-[0_12px_28px_rgba(113,82,57,0.12)]">
-          ૮₍ ˶ᵔ ᵕ ᵔ˶ ₎ა
-        </div>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">AI-помощник</p>
+        <h2 className="mt-2 text-xl font-semibold text-slate-900">Творожок поможет добавить продукт</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          Напиши продукт, и я подтяну КБЖУ и нутриенты. Потом сразу открою обычную карточку продукта, где можно
+          проверить и сохранить.
+        </p>
       </div>
 
       <div className="mt-4 rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -57,24 +61,11 @@ export function ProductAiAssistantCard({
             placeholder="Вставьте свой DeepSeek API key"
           />
         </label>
-        <div className="mt-3 flex items-center gap-3">
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="text-xs text-slate-500">Ключ сохраняется автоматически в этом браузере.</div>
           <button
             type="button"
-            onClick={() => {
-              saveLocalDeepSeekApiKey(apiKey);
-              setSavingKey(true);
-              window.setTimeout(() => setSavingKey(false), 900);
-            }}
-            className="theme-accent-button rounded-[1rem] px-4 py-3 text-sm font-semibold"
-          >
-            {savingKey ? "Сохранено" : "Сохранить ключ"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setApiKey("");
-              saveLocalDeepSeekApiKey("");
-            }}
+            onClick={() => setApiKey("")}
             className="theme-elevated rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
           >
             Очистить
