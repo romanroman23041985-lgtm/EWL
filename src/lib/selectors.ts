@@ -49,6 +49,18 @@ const suggestionPresets: SuggestionPreset[] = [
   },
 ];
 
+const suggestionBlockedKeywords = [
+  "сух",
+  "порош",
+  "протеин",
+  "изолят",
+  "концентрат",
+  "заменитель",
+  "смесь",
+  "белок яич",
+  "желток сух",
+];
+
 const nutrientHighlightMeta: Array<{
   key: keyof NutritionTotals;
   label: string;
@@ -235,10 +247,47 @@ export function getMealTotals(rows: DayMealRow[]) {
 }
 
 function getSuggestedPortion(product: Product) {
+  const haystack = `${product.name} ${(product.searchTerms ?? []).join(" ")}`.toLowerCase();
+
   if (product.unitMode === "piece" && (product.gramsPerUnit ?? 0) > 0) {
     return {
       grams: Math.max(1, Math.round(product.gramsPerUnit ?? 0)),
       label: `1 ${product.unitLabel?.trim() || "шт."}`,
+    };
+  }
+
+  if (/(орех|миндал|фундук|кешью|арахис|семеч|халв|шоколад|сыр|масл|паста)/.test(haystack)) {
+    return {
+      grams: 30,
+      label: "30 г",
+    };
+  }
+
+  if (/(твор|йогурт|кефир|молок|скыр)/.test(haystack)) {
+    return {
+      grams: 150,
+      label: "150 г",
+    };
+  }
+
+  if (/(кур|индей|рыб|тунец|лосос|крев|говяд|свинин|котлет|мяс)/.test(haystack)) {
+    return {
+      grams: 120,
+      label: "120 г",
+    };
+  }
+
+  if (/(банан|яблок|груш|ягод|апельсин|мандар|киви|фрукт)/.test(haystack)) {
+    return {
+      grams: 140,
+      label: "140 г",
+    };
+  }
+
+  if (/(рис|греч|овся|булгур|макарон|карто|хлеб|лаваш)/.test(haystack)) {
+    return {
+      grams: 80,
+      label: "80 г",
     };
   }
 
@@ -251,6 +300,11 @@ function getSuggestedPortion(product: Product) {
 function matchesSuggestionPreset(product: Product, keywords: string[]) {
   const haystack = `${product.name} ${(product.searchTerms ?? []).join(" ")}`.toLowerCase();
   return keywords.some((keyword) => haystack.includes(keyword));
+}
+
+function isReasonableSuggestionProduct(product: Product) {
+  const haystack = `${product.name} ${(product.searchTerms ?? []).join(" ")}`.toLowerCase();
+  return !suggestionBlockedKeywords.some((keyword) => haystack.includes(keyword));
 }
 
 function pickSuggestionPreset(balance: NutritionTotals) {
@@ -281,21 +335,28 @@ export function getDaySuggestion(summary: DaySummary, products: Product[]) {
     };
   }
 
+  const remainingKcal = Math.max(summary.balance.kcal, 0);
+  if (remainingKcal < 40 || remainingKcal > 260) {
+    return null;
+  }
+
   const preset = pickSuggestionPreset(summary.balance);
-  const preferredProducts = getVisibleProducts(products).filter((product) =>
-    matchesSuggestionPreset(product, preset.keywords),
+  const preferredProducts = getVisibleProducts(products).filter(
+    (product) => isReasonableSuggestionProduct(product) && matchesSuggestionPreset(product, preset.keywords),
   );
-  const candidates = preferredProducts.length ? preferredProducts : getVisibleProducts(products);
+  const candidates = preferredProducts.length
+    ? preferredProducts
+    : getVisibleProducts(products).filter((product) => isReasonableSuggestionProduct(product));
 
   const recommended = candidates
     .map((product) => {
       const portion = getSuggestedPortion(product);
       const nutrition = calculateProductNutrition(product, portion.grams);
-      const kcalGap = Math.abs(summary.balance!.kcal - nutrition.kcal);
+      const kcalGap = Math.abs(remainingKcal - nutrition.kcal);
       const proteinScore = Math.min(nutrition.protein, Math.max(summary.balance!.protein, 0)) * 5;
       const carbScore = Math.min(nutrition.carbs, Math.max(summary.balance!.carbs, 0)) * 3;
       const fatScore = Math.min(nutrition.fat, Math.max(summary.balance!.fat, 0)) * 2;
-      const overflowPenalty = nutrition.kcal > summary.balance!.kcal + 120 ? 200 : 0;
+      const overflowPenalty = nutrition.kcal > remainingKcal + 60 ? 200 : 0;
 
       return {
         product,
@@ -304,6 +365,7 @@ export function getDaySuggestion(summary: DaySummary, products: Product[]) {
         score: proteinScore + carbScore + fatScore - kcalGap / 10 - overflowPenalty,
       };
     })
+    .filter((item) => item.score > 0)
     .sort((left, right) => right.score - left.score)[0];
 
   if (!recommended) {
@@ -413,7 +475,8 @@ export function getEasyDayTopUpSuggestions(summary: DaySummary, products: Produc
     return null;
   }
 
-  if (summary.balance.kcal <= 0) {
+  const remainingKcal = Math.max(summary.balance.kcal, 0);
+  if (remainingKcal <= 0 || remainingKcal > 260) {
     return null;
   }
 
@@ -438,8 +501,7 @@ export function getEasyDayTopUpSuggestions(summary: DaySummary, products: Produc
   }
 
   const focusDeficits = deficitMeta.slice(0, 2);
-  const visibleProducts = getVisibleProducts(products);
-  const remainingKcal = Math.max(summary.balance.kcal, 0);
+  const visibleProducts = getVisibleProducts(products).filter((product) => isReasonableSuggestionProduct(product));
 
   const suggestions = visibleProducts
     .map((product) => {
@@ -451,7 +513,7 @@ export function getEasyDayTopUpSuggestions(summary: DaySummary, products: Produc
         return score + (targetValue > 0 ? value / targetValue : value);
       }, 0);
       const kcalPenalty =
-        remainingKcal > 0 ? Math.max(0, nutrition.kcal - Math.max(remainingKcal + 120, remainingKcal * 1.4)) / 60 : 0;
+        remainingKcal > 0 ? Math.max(0, nutrition.kcal - Math.max(remainingKcal + 60, remainingKcal * 1.25)) / 60 : 0;
       const richnessBonus = getProductTopNutrientHighlights(product, user, 3).length * 0.08;
 
       return {
