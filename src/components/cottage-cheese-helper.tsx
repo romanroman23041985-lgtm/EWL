@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { AiHelperSheet } from "@/components/ai-helper-sheet";
+import { formatDayAiContext } from "@/lib/ai/day-context";
 import { subscribeAiHelperLaunch, type AiHelperLaunchPayload } from "@/lib/ai/helper-launch";
 import { getUnlockedAchievements } from "@/lib/companion/achievements";
 import {
@@ -210,6 +211,13 @@ export function CottageCheeseHelper() {
 
   const summary = useMemo(() => getDaySummary(state, user, currentDate), [state, user, currentDate]);
   const sections = useMemo(() => getMealSections(summary), [summary]);
+  const defaultDayContext = useMemo(() => {
+    if (!user || !summary.target) {
+      return undefined;
+    }
+
+    return formatDayAiContext(summary);
+  }, [summary, user]);
   const mascotMode = useMemo<MascotMode>(() => {
     if (!user) {
       return "default";
@@ -421,6 +429,7 @@ export function CottageCheeseHelper() {
       <AiHelperSheet
         open={helperOpen}
         currentPath={pathname}
+        defaultDayContext={defaultDayContext}
         onClose={() => setHelperOpen(false)}
         launchRequest={launchRequest}
         onCreateProduct={(draft) => {

@@ -19,12 +19,14 @@ export function AiHelperSheet({
   onClose,
   onCreateProduct,
   launchRequest,
+  defaultDayContext,
 }: {
   open: boolean;
   currentPath: string;
   onClose: () => void;
   onCreateProduct: (draft: ProductDraft) => void;
   launchRequest?: (AiHelperLaunchPayload & { id: string }) | null;
+  defaultDayContext?: string;
 }) {
   const [tab, setTab] = useState<HelperTab>("product");
   const [apiKey, setApiKey] = useState("");
@@ -103,7 +105,7 @@ export function AiHelperSheet({
           mode: "chat",
           currentPath,
           question: prompt,
-          dayContext: dayContextOverride,
+          dayContext: dayContextOverride ?? defaultDayContext,
         });
 
         if (result.mode === "chat") {
@@ -115,7 +117,7 @@ export function AiHelperSheet({
         setSubmitting(false);
       }
     },
-    [apiKey, chatQuestion, currentPath],
+    [apiKey, chatQuestion, currentPath, defaultDayContext],
   );
 
   useEffect(() => {
