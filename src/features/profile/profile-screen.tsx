@@ -205,6 +205,54 @@ function getNumberOrNull(value: string) {
   return value.trim() ? sanitizeNumber(value, 0) : null;
 }
 
+function roundInputValue(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+function calculateMacroCalories(values: Pick<FormulaValues, "proteinPerKg" | "fatPerKg" | "carbsPerKg">, weight: number) {
+  const protein = sanitizeNumber(values.proteinPerKg, 0) * weight;
+  const fat = sanitizeNumber(values.fatPerKg, 0) * weight;
+  const carbs = sanitizeNumber(values.carbsPerKg, 0) * weight;
+  return protein * 4 + fat * 9 + carbs * 4;
+}
+
+function syncCustomFormulaValues(
+  currentValues: FormulaValues,
+  changes: Partial<FormulaValues>,
+  weight: number,
+) {
+  const nextValues = {
+    ...currentValues,
+    ...changes,
+  };
+
+  if (changes.customKcalTarget !== undefined) {
+    const nextKcal = sanitizeNumber(changes.customKcalTarget, 0);
+    const currentMacroCalories = calculateMacroCalories(currentValues, weight);
+
+    if (nextKcal > 0 && currentMacroCalories > 0 && weight > 0) {
+      const scale = nextKcal / currentMacroCalories;
+      nextValues.proteinPerKg = String(roundInputValue(sanitizeNumber(currentValues.proteinPerKg, 0) * scale));
+      nextValues.fatPerKg = String(roundInputValue(sanitizeNumber(currentValues.fatPerKg, 0) * scale));
+      nextValues.carbsPerKg = String(roundInputValue(sanitizeNumber(currentValues.carbsPerKg, 0) * scale));
+    }
+
+    nextValues.customKcalTarget = changes.customKcalTarget;
+    return nextValues;
+  }
+
+  if (
+    changes.proteinPerKg !== undefined ||
+    changes.fatPerKg !== undefined ||
+    changes.carbsPerKg !== undefined
+  ) {
+    const recalculatedKcal = calculateMacroCalories(nextValues, weight);
+    nextValues.customKcalTarget = recalculatedKcal > 0 ? String(Math.round(recalculatedKcal)) : currentValues.customKcalTarget;
+  }
+
+  return nextValues;
+}
+
 function isDraftValid(draft: ProfileDraft) {
   const commonOk =
     draft.name.trim().length >= 2 &&
@@ -513,6 +561,12 @@ function ProfileForm({
   onSubmit: () => void;
   onCancel?: () => void;
 }) {
+  const handleFormulaChange = (changes: Partial<FormulaValues>) => {
+    const weight = sanitizeNumber(draft.weightKg, 0);
+    const nextFormula = syncCustomFormulaValues(getDraftFormulaValues(draft), changes, weight);
+    onChange({ ...draft, ...nextFormula });
+  };
+
   return (
     <div className="grid gap-4">
       <label className="text-sm font-medium text-slate-600">
@@ -596,7 +650,7 @@ function ProfileForm({
       <FormulaInputs
         mode={draft.formulaMode}
         values={getDraftFormulaValues(draft)}
-        onChange={(changes) => onChange({ ...draft, ...changes })}
+        onChange={handleFormulaChange}
       />
 
       <SummaryPreview preview={preview} warning={getCustomDeficitWarning(getPreviewProfile(draft))} />
@@ -661,6 +715,24 @@ function CurrentProfileForm({
     setFormulaOverrides({});
   };
   const formulaDraft = { ...getProfileFormulaValues(user), ...formulaOverrides };
+  const handleFormulaInputChange = (changes: Partial<FormulaValues>) => {
+    const weight = user.weightKg;
+    const nextFormula = syncCustomFormulaValues(formulaDraft, changes, weight);
+    setFormulaOverrides(nextFormula);
+    onUpdate({
+      customKcalTarget: getNumberOrNull(nextFormula.customKcalTarget),
+      proteinPerKg: sanitizeNumber(nextFormula.proteinPerKg, user.proteinPerKg),
+      fatPerKg: sanitizeNumber(nextFormula.fatPerKg, user.fatPerKg),
+      carbsPerKg: sanitizeNumber(nextFormula.carbsPerKg, user.carbsPerKg),
+      fiberTarget: changes.fiberTarget === undefined ? undefined : getNumberOrNull(nextFormula.fiberTarget),
+      magnesiumTarget: changes.magnesiumTarget === undefined ? undefined : getNumberOrNull(nextFormula.magnesiumTarget),
+      ironTarget: changes.ironTarget === undefined ? undefined : getNumberOrNull(nextFormula.ironTarget),
+      zincTarget: changes.zincTarget === undefined ? undefined : getNumberOrNull(nextFormula.zincTarget),
+      omega3Target: changes.omega3Target === undefined ? undefined : getNumberOrNull(nextFormula.omega3Target),
+      vitaminB12Target:
+        changes.vitaminB12Target === undefined ? undefined : getNumberOrNull(nextFormula.vitaminB12Target),
+    });
+  };
 
   return (
     <div className="grid gap-4">
@@ -738,28 +810,7 @@ function CurrentProfileForm({
       <FormulaInputs
         mode={user.formulaMode}
         values={formulaDraft}
-        onChange={(changes) =>
-          {
-            setFormulaOverrides((prev) => ({ ...prev, ...changes }));
-            onUpdate({
-              customKcalTarget:
-                changes.customKcalTarget === undefined ? undefined : getNumberOrNull(changes.customKcalTarget),
-              proteinPerKg:
-                changes.proteinPerKg === undefined ? undefined : sanitizeNumber(changes.proteinPerKg, user.proteinPerKg),
-              fatPerKg: changes.fatPerKg === undefined ? undefined : sanitizeNumber(changes.fatPerKg, user.fatPerKg),
-              carbsPerKg:
-                changes.carbsPerKg === undefined ? undefined : sanitizeNumber(changes.carbsPerKg, user.carbsPerKg),
-              fiberTarget: changes.fiberTarget === undefined ? undefined : getNumberOrNull(changes.fiberTarget),
-              magnesiumTarget:
-                changes.magnesiumTarget === undefined ? undefined : getNumberOrNull(changes.magnesiumTarget),
-              ironTarget: changes.ironTarget === undefined ? undefined : getNumberOrNull(changes.ironTarget),
-              zincTarget: changes.zincTarget === undefined ? undefined : getNumberOrNull(changes.zincTarget),
-              omega3Target: changes.omega3Target === undefined ? undefined : getNumberOrNull(changes.omega3Target),
-              vitaminB12Target:
-                changes.vitaminB12Target === undefined ? undefined : getNumberOrNull(changes.vitaminB12Target),
-            });
-          }
-        }
+        onChange={handleFormulaInputChange}
       />
 
       <SummaryPreview preview={calculateTargets(user)} warning={getCustomDeficitWarning(user)} />
