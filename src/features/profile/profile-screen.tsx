@@ -5,12 +5,7 @@ import { UserSwitcher } from "@/components/user-switcher";
 import { FORMULA_PRESETS } from "@/lib/constants";
 import { calculateTargets, calculateTdee, resolveProfileFormula } from "@/lib/macros";
 import { getSelectedUser } from "@/lib/selectors";
-import {
-  buildTransferState,
-  decodeTransferKey,
-  downloadStateBackup,
-  encodeTransferKey,
-} from "@/lib/transfer";
+import { decodeTransferKey } from "@/lib/transfer";
 import type {
   ActivityLevel,
   FormulaMode,
@@ -840,10 +835,8 @@ export function ProfileScreen() {
   const [showTransferImport, setShowTransferImport] = useState(false);
   const [transferKeyInput, setTransferKeyInput] = useState("");
   const [transferError, setTransferError] = useState("");
-  const [copied, setCopied] = useState(false);
 
   const selectedUser = getSelectedUser(state);
-  const transferKey = useMemo(() => encodeTransferKey(buildTransferState(state)), [state]);
   const draftPreview = useMemo(() => buildDraftPreview(draft), [draft]);
   const draftValid = useMemo(() => isDraftValid(draft), [draft]);
 
@@ -890,16 +883,6 @@ export function ProfileScreen() {
       setShowCreateProfile(false);
     } catch {
       setTransferError("Ключ не подошел. Проверьте, что скопировали его полностью.");
-    }
-  };
-
-  const copyTransferKey = async () => {
-    try {
-      await navigator.clipboard.writeText(transferKey);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1800);
-    } catch {
-      setCopied(false);
     }
   };
 
@@ -1056,77 +1039,6 @@ export function ProfileScreen() {
             />
           </div>
         ) : null}
-      </section>
-
-      <section className="app-card rounded-[2rem] p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Перенос и сохранение данных</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Скопируйте ключ для другого браузера или скачайте backup-файл.
-            </p>
-          </div>
-        </div>
-
-        <div className="theme-important mt-4 rounded-[1.35rem] px-4 py-4">
-          <div className="text-sm font-semibold text-slate-900">Ключ переноса</div>
-          <p className="mt-1 text-sm text-slate-600">
-            Скопируйте этот ключ и вставьте его в другом браузере в разделе импорта.
-          </p>
-          <textarea value={transferKey} readOnly className={textAreaClass} />
-          <div className="mt-3 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={copyTransferKey}
-              className="theme-accent-button rounded-[1rem] px-5 py-3 text-sm font-semibold"
-            >
-              {copied ? "Скопировано" : "Скопировать ключ"}
-            </button>
-            <button
-              type="button"
-              onClick={() => downloadStateBackup(buildTransferState(state))}
-              className="theme-elevated rounded-[1rem] px-5 py-3 text-sm font-semibold text-slate-700"
-            >
-              Скачать backup
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => {
-              setShowTransferImport((value) => !value);
-              setTransferError("");
-            }}
-            className="theme-elevated rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
-          >
-            {showTransferImport ? "Закрыть импорт" : "Вставить ключ переноса"}
-          </button>
-
-          {showTransferImport ? (
-            <div className="mt-4 rounded-[1.2rem] bg-slate-50 px-4 py-4">
-              <div className="text-sm font-semibold text-slate-900">Импорт ключа</div>
-              <textarea
-                value={transferKeyInput}
-                onChange={(event) => setTransferKeyInput(event.target.value)}
-                className={textAreaClass}
-                placeholder="Вставьте ключ переноса"
-              />
-              {transferError ? (
-                <div className="theme-status-warning mt-3 rounded-[1rem] px-4 py-3 text-sm">{transferError}</div>
-              ) : null}
-              <button
-                type="button"
-                onClick={importTransferKey}
-                disabled={!transferKeyInput.trim()}
-                className="theme-accent-button mt-4 rounded-[1rem] px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                Загрузить данные по ключу
-              </button>
-            </div>
-          ) : null}
-        </div>
       </section>
 
       <section className="app-card rounded-[2rem] p-5">
