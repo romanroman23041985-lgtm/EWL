@@ -420,6 +420,9 @@ function FormulaInputs({
     <div className="grid gap-4">
       <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
         <div className="text-sm font-semibold text-slate-900">Свои Б/Ж/У на кг</div>
+        <div className="mt-1 text-xs leading-5 text-slate-500">
+          Здесь связываются только калории и Б/Ж/У на кг. Вес профиля и желаемый вес не меняются.
+        </div>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <label className="text-sm font-medium text-slate-600">
             Ккал на день
