@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { UserSwitcher } from "@/components/user-switcher";
 import { FORMULA_PRESETS } from "@/lib/constants";
 import { calculateTargets, resolveProfileFormula } from "@/lib/macros";
 import { getSelectedUser } from "@/lib/selectors";
-import type { ActivityLevel, FormulaMode } from "@/lib/types";
+import { buildTransferState, decodeTransferKey, downloadStateBackup, encodeTransferKey } from "@/lib/transfer";
+import type { ActivityLevel, FormulaMode, PersistedAppState } from "@/lib/types";
 import { activityLabel, formulaLabel, sanitizeNumber, useAppStore } from "@/store/app-store";
-import { UserSwitcher } from "@/components/user-switcher";
 
 const inputClass =
   "mt-2 h-12 w-full rounded-[1rem] border border-[var(--color-outline)] bg-white px-4 text-[15px] outline-none";
@@ -47,13 +48,19 @@ const emptyDraft: ProfileDraft = {
 };
 
 export function ProfileScreen() {
-  const { state, createProfile, deleteProfile, setSelectedUser, updateProfile } = useAppStore();
+  const { state, createProfile, deleteProfile, replaceState, setSelectedUser, updateProfile } = useAppStore();
   const [draft, setDraft] = useState<ProfileDraft>(emptyDraft);
   const [showCreateProfile, setShowCreateProfile] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showSwitcher, setShowSwitcher] = useState(false);
+  const [showTransferImport, setShowTransferImport] = useState(false);
+  const [transferKeyInput, setTransferKeyInput] = useState("");
+  const [transferError, setTransferError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const selectedUser = getSelectedUser(state);
+  const transferKey = useMemo(() => encodeTransferKey(buildTransferState(state)), [state]);
+
   const draftAge = sanitizeNumber(draft.age, 30);
   const draftHeight = sanitizeNumber(draft.heightCm, 0);
   const draftWeight = sanitizeNumber(draft.weightKg, 0);
@@ -127,23 +134,85 @@ export function ProfileScreen() {
     setShowSwitcher(false);
   };
 
+  const importTransferKey = () => {
+    try {
+      const importedState = decodeTransferKey(transferKeyInput);
+      replaceState(importedState as PersistedAppState);
+      setTransferKeyInput("");
+      setTransferError("");
+      setShowTransferImport(false);
+      setShowCreateProfile(false);
+    } catch {
+      setTransferError("Ключ не подошел. Проверьте, что вставили его целиком.");
+    }
+  };
+
+  const copyTransferKey = async () => {
+    try {
+      await navigator.clipboard.writeText(transferKey);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   if (!selectedUser) {
     return (
       <div className="space-y-4">
         <section className="app-card rounded-[2rem] p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Профиль</p>
-          <h1 className="mt-2 text-2xl font-semibold text-slate-900">Создайте профиль</h1>
-          <p className="mt-2 text-sm text-slate-500">Введите имя, пол, возраст, рост, вес и желаемый вес.</p>
+          <h1 className="mt-2 text-2xl font-semibold text-slate-900">Создайте профиль или перенесите данные</h1>
+          <p className="mt-2 text-sm text-slate-500">Можно начать с нового профиля или вставить ключ переноса из другого браузера.</p>
 
-          {!showCreateProfile ? (
+          <div className="mt-5 flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => setShowCreateProfile(true)}
-              className="mt-5 rounded-[1.2rem] bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white"
+              onClick={() => {
+                setShowCreateProfile(true);
+                setShowTransferImport(false);
+                setTransferError("");
+              }}
+              className="theme-accent-button rounded-[1.2rem] px-5 py-3 text-sm font-semibold"
             >
               Создать профиль
             </button>
-          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                setShowTransferImport((value) => !value);
+                setShowCreateProfile(false);
+                setTransferError("");
+              }}
+              className="theme-elevated rounded-[1.2rem] px-5 py-3 text-sm font-semibold text-slate-700"
+            >
+              Ввести ключ
+            </button>
+          </div>
+
+          {showTransferImport ? (
+            <div className="theme-important mt-5 rounded-[1.4rem] px-4 py-4">
+              <div className="text-sm font-semibold text-slate-900">Ключ переноса</div>
+              <p className="mt-1 text-sm text-slate-600">Вставьте ключ из другого браузера, и данные загрузятся сюда.</p>
+              <textarea
+                value={transferKeyInput}
+                onChange={(event) => setTransferKeyInput(event.target.value)}
+                className="theme-input mt-3 min-h-28 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
+                placeholder="Вставьте ключ переноса"
+              />
+              {transferError ? <div className="theme-status-warning mt-3 rounded-[1rem] px-4 py-3 text-sm">{transferError}</div> : null}
+              <button
+                type="button"
+                onClick={importTransferKey}
+                disabled={!transferKeyInput.trim()}
+                className="theme-accent-button mt-4 rounded-[1rem] px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Перенести данные
+              </button>
+            </div>
+          ) : null}
+
+          {showCreateProfile ? (
             <div className="mt-5">
               <ProfileForm
                 draft={draft}
@@ -157,7 +226,7 @@ export function ProfileScreen() {
                 }}
               />
             </div>
-          )}
+          ) : null}
         </section>
       </div>
     );
@@ -183,7 +252,7 @@ export function ProfileScreen() {
           <button
             type="button"
             onClick={() => setShowEditProfile((value) => !value)}
-            className="rounded-[1rem] bg-[var(--color-accent)] px-4 py-3 text-sm font-semibold text-white"
+            className="theme-accent-button rounded-[1rem] px-4 py-3 text-sm font-semibold"
           >
             {showEditProfile ? "Закрыть" : "Зайти"}
           </button>
@@ -230,6 +299,71 @@ export function ProfileScreen() {
             />
           </div>
         ) : null}
+      </section>
+
+      <section className="app-card rounded-[2rem] p-5">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Перенос и выгрузка данных</h2>
+            <p className="mt-1 text-sm text-slate-500">Можно перенести данные в другой браузер по ключу или скачать backup-файл.</p>
+          </div>
+        </div>
+
+        <div className="theme-important mt-4 rounded-[1.35rem] px-4 py-4">
+          <div className="text-sm font-semibold text-slate-900">Ключ переноса</div>
+          <p className="mt-1 text-sm text-slate-600">Скопируйте этот ключ и вставьте его в другом браузере вместо создания профиля.</p>
+          <textarea
+            value={transferKey}
+            readOnly
+            className="theme-input mt-3 min-h-28 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
+          />
+          <div className="mt-3 flex flex-wrap gap-3">
+            <button type="button" onClick={copyTransferKey} className="theme-accent-button rounded-[1rem] px-5 py-3 text-sm font-semibold">
+              {copied ? "Скопировано" : "Скопировать ключ"}
+            </button>
+            <button
+              type="button"
+              onClick={() => downloadStateBackup(buildTransferState(state))}
+              className="theme-elevated rounded-[1rem] px-5 py-3 text-sm font-semibold text-slate-700"
+            >
+              Скачать backup
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              setShowTransferImport((value) => !value);
+              setTransferError("");
+            }}
+            className="theme-elevated rounded-[1rem] px-4 py-3 text-sm font-semibold text-slate-700"
+          >
+            {showTransferImport ? "Скрыть импорт" : "Ввести ключ переноса"}
+          </button>
+
+          {showTransferImport ? (
+            <div className="mt-4 rounded-[1.2rem] bg-slate-50 px-4 py-4">
+              <div className="text-sm font-semibold text-slate-900">Импорт ключа</div>
+              <textarea
+                value={transferKeyInput}
+                onChange={(event) => setTransferKeyInput(event.target.value)}
+                className="theme-input mt-3 min-h-28 w-full rounded-[1.2rem] border border-[var(--color-outline)] px-4 py-3 outline-none"
+                placeholder="Вставьте ключ переноса"
+              />
+              {transferError ? <div className="theme-status-warning mt-3 rounded-[1rem] px-4 py-3 text-sm">{transferError}</div> : null}
+              <button
+                type="button"
+                onClick={importTransferKey}
+                disabled={!transferKeyInput.trim()}
+                className="theme-accent-button mt-4 rounded-[1rem] px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Загрузить данные из ключа
+              </button>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <section className="app-card rounded-[2rem] p-5">
@@ -518,11 +652,7 @@ function ProfileForm({
 
       <div className="flex items-center gap-3">
         {onCancel ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="rounded-[1rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700"
-          >
+          <button type="button" onClick={onCancel} className="rounded-[1rem] bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
             Отмена
           </button>
         ) : null}
@@ -530,7 +660,7 @@ function ProfileForm({
           type="button"
           disabled={!valid}
           onClick={onSubmit}
-          className="ml-auto rounded-[1rem] bg-[var(--color-accent)] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-45"
+          className="theme-accent-button ml-auto rounded-[1rem] px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-45"
         >
           Создать профиль
         </button>
@@ -641,11 +771,8 @@ function CurrentProfileForm({
         onChange={(changes) =>
           onUpdate({
             proteinPerKg:
-              changes.proteinPerKg === undefined
-                ? undefined
-                : sanitizeNumber(changes.proteinPerKg, user.proteinPerKg),
-            fatPerKg:
-              changes.fatPerKg === undefined ? undefined : sanitizeNumber(changes.fatPerKg, user.fatPerKg),
+              changes.proteinPerKg === undefined ? undefined : sanitizeNumber(changes.proteinPerKg, user.proteinPerKg),
+            fatPerKg: changes.fatPerKg === undefined ? undefined : sanitizeNumber(changes.fatPerKg, user.fatPerKg),
             carbsPerKg:
               changes.carbsPerKg === undefined ? undefined : sanitizeNumber(changes.carbsPerKg, user.carbsPerKg),
           })

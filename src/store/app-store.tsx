@@ -40,6 +40,7 @@ type ProfileInput = Pick<
 
 type Action =
   | { type: "hydrate"; payload: PersistedAppState }
+  | { type: "replaceState"; payload: PersistedAppState }
   | { type: "setThemeMode"; payload: ThemeMode }
   | { type: "updateCompanion"; payload: Partial<CompanionState> }
   | { type: "setSelectedUser"; payload: string }
@@ -213,6 +214,7 @@ function ensureDayEntry(state: HydratedState, userId: string, date: string) {
 function reducer(state: HydratedState, action: Action): HydratedState {
   switch (action.type) {
     case "hydrate":
+    case "replaceState":
       return {
         ...normalizeState(action.payload),
         hydrated: true,
@@ -451,6 +453,7 @@ type StoreValue = {
   createProduct: (draft: ProductDraft) => Product;
   updateProduct: (productId: string, draft: ProductDraft) => void;
   deleteProduct: (productId: string) => void;
+  replaceState: (payload: PersistedAppState) => void;
 };
 
 const AppStoreContext = createContext<StoreValue | null>(null);
@@ -503,6 +506,7 @@ export function AppStoreProvider({ children }: Readonly<{ children: React.ReactN
         createProfile: (payload) => dispatch({ type: "createProfile", payload }),
         updateProfile: (userId, changes) => dispatch({ type: "updateProfile", payload: { userId, changes } }),
         deleteProfile: (userId) => dispatch({ type: "deleteProfile", payload: { userId } }),
+        replaceState: (payload) => dispatch({ type: "replaceState", payload }),
         createProduct: (draft) => {
           const product = toProductEntity(draft);
           dispatch({ type: "createProduct", payload: { product } });
