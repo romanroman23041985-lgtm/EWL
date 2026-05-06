@@ -1,6 +1,14 @@
 # Easy Weight Loss
 
-Easy Weight Loss is a mobile-first nutrition planner built as a lightweight PWA/web app. It is designed for everyday phone use: quick day editing, simple product search, calendar history, profile-based macro targets, and a calm wellness-style interface.
+[![Deploy to GitHub Pages](https://github.com/KaimiEwl/EWL/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/KaimiEwl/EWL/actions/workflows/deploy-pages.yml)
+
+Easy Weight Loss is a mobile-first nutrition planner built as a lightweight PWA/web app. It is designed for everyday phone use: quick day editing, simple product search, calendar history, profile-based macro targets and a calm wellness-style interface.
+
+## Open It
+
+- Live app: https://kaimiewl.github.io/EWL/profile/
+- Portfolio: https://kaimiewl.github.io/#work
+- Clean portfolio export: https://github.com/KaimiEwl/ewl-nutrition-pwa
 
 ## Tech Stack
 
@@ -77,7 +85,7 @@ How it works:
 Expected public URL for this repository:
 
 ```text
-https://romanroman23041985-lgtm.github.io/EWL/
+https://kaimiewl.github.io/EWL/
 ```
 
 Important:
